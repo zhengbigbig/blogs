@@ -1,20 +1,27 @@
 package hello.configuration;
 
+import hello.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
+import javax.inject.Inject;
 
 @Configuration
 @EnableWebSecurity
 // 告诉spring 加上web安全模块，设置后，所有的请求都会被拦截
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
+
+    @Inject
+    private UserDetailsService userDetailsService;
+
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.csrf().disable(); // 默认是开启的，会导致访问403，需要先关闭，一种跨站请求伪造，对post有效
@@ -26,23 +33,22 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .anyRequest().permitAll();
     }
 
-    //  告知spring用户服务  合法用户标准 相当于一个Mock基础的测试
-//    @Bean
-//    @Override
-//    public UserDetailsService userDetailsService() {
-//        UserDetails user =
-//                User.withDefaultPasswordEncoder()
-//                        .username("user")
-//                        .password("password")
-//                        .roles("USER")
-//                        .build();
-//
-//        return new InMemoryUserDetailsManager(user);
-//    }
-
+    // 鉴权
     @Bean
     @Override
-    protected AuthenticationManager authenticationManager() throws Exception {
+    public AuthenticationManager authenticationManager() throws Exception {
         return super.authenticationManager();
+    }
+
+    // 全局的加密服务
+    @Inject
+    public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
+        auth.userDetailsService(userDetailsService).passwordEncoder(bCryptPasswordEncoder());
+    }
+
+    // 对存储到数据库的密码进行加密
+    @Bean
+    public BCryptPasswordEncoder bCryptPasswordEncoder(){
+        return new BCryptPasswordEncoder();
     }
 }

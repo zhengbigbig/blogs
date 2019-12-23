@@ -28,6 +28,8 @@ public class AuthController {
     @GetMapping("/auth")
     @ResponseBody // 将返回值限定在body里面
     public Object auth() {
+        // 这里没有接入数据库，保存的信息是在内存中的，因此暂时读取不到，返回的是anonymousUser 匿名用户
+        String userName = SecurityContextHolder.getContext().getAuthentication().getName();
         return new Result("ok", "用户没有登录", false);
     }
 
@@ -56,6 +58,8 @@ public class AuthController {
             // 怎么确定使用哪个provider？ 只需要根据Token的类型，传入token，交给AuthenticationManager provider处理
             authenticationManager.authenticate(token);
             // 如果密码对比正确，则设置这个token
+            // 把用户信息保存在内存中某一个地方
+            // Cookie
             SecurityContextHolder.getContext().setAuthentication(token);
 
             User loggedInUser = new User(1, "张三");
