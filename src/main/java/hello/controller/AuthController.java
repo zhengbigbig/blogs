@@ -1,6 +1,7 @@
 package hello.controller;
 
 import hello.entity.User;
+import hello.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -16,11 +17,13 @@ import java.util.Map;
 // Filter->构造Token->AuthenticationManager->转给Provider处理->认证处理成功后续操作或者不通过抛异常
 @RestController
 public class AuthController {
+    private UserService userService;
     private UserDetailsService userDetailsService;
     private AuthenticationManager authenticationManager;
 
     @Autowired
-    public AuthController(UserDetailsService userDetailsService, AuthenticationManager authenticationManager) {
+    public AuthController(UserService userService, UserDetailsService userDetailsService, AuthenticationManager authenticationManager) {
+        this.userService = userService;
         this.userDetailsService = userDetailsService;
         this.authenticationManager = authenticationManager;
     }
@@ -30,7 +33,10 @@ public class AuthController {
     public Object auth() {
         // 这里没有接入数据库，保存的信息是在内存中的，因此暂时读取不到，返回的是anonymousUser 匿名用户
         String userName = SecurityContextHolder.getContext().getAuthentication().getName();
-        return new Result("ok", "用户没有登录", false);
+        if (userName.contains("anonymous")) {
+            return new Result("ok", "用户没有登录", false);
+        }
+        return new Result("ok", null, true, userService.getUserByUsername(userName));
     }
 
     @PostMapping("/auth/login")
@@ -44,8 +50,8 @@ public class AuthController {
         // 判断用户存在与否，如果不存在则直接返回
         try {
             userDetails = userDetailsService.loadUserByUsername(username);
-        } catch (UsernameNotFoundException e){
-            return new Result("fail","用户不存在",false);
+        } catch (UsernameNotFoundException e) {
+            return new Result("fail", "用户不存在", false);
         }
 
         // 先构建一个未认证的token，token只是一个载体而已

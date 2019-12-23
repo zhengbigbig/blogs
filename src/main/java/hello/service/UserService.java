@@ -11,7 +11,6 @@ import javax.inject.Inject;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 // 之前使用WebSecurityConfig中的UserDetailsService是Mock的，现在来实现
 @Service
@@ -36,6 +35,10 @@ public class UserService implements UserDetailsService {
 
     public User getUserById(Integer id) {
         return null;
+    }
+
+    public User getUserByUsername(String username) {
+        return new User(1, username);
     }
 
     @Override
