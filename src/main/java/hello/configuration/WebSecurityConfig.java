@@ -21,22 +21,24 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         http
                 // 授权请求，通配符匹配路径，允许匹配的所有
                 .authorizeRequests()
-                .antMatchers("/", "/auth/**").permitAll();
+                .antMatchers("/", "/auth/**").permitAll()
+                .antMatchers("/xxx").authenticated()
+                .anyRequest().permitAll();
     }
 
     //  告知spring用户服务  合法用户标准 相当于一个Mock基础的测试
-    @Bean
-    @Override
-    public UserDetailsService userDetailsService() {
-        UserDetails user =
-                User.withDefaultPasswordEncoder()
-                        .username("user")
-                        .password("password")
-                        .roles("USER")
-                        .build();
-
-        return new InMemoryUserDetailsManager(user);
-    }
+//    @Bean
+//    @Override
+//    public UserDetailsService userDetailsService() {
+//        UserDetails user =
+//                User.withDefaultPasswordEncoder()
+//                        .username("user")
+//                        .password("password")
+//                        .roles("USER")
+//                        .build();
+//
+//        return new InMemoryUserDetailsManager(user);
+//    }
 
     @Bean
     @Override
