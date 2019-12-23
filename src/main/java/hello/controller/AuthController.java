@@ -8,7 +8,6 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,13 +17,11 @@ import java.util.Map;
 @RestController
 public class AuthController {
     private UserService userService;
-    private UserDetailsService userDetailsService;
     private AuthenticationManager authenticationManager;
 
     @Autowired
-    public AuthController(UserService userService, UserDetailsService userDetailsService, AuthenticationManager authenticationManager) {
+    public AuthController(UserService userService, AuthenticationManager authenticationManager) {
         this.userService = userService;
-        this.userDetailsService = userDetailsService;
         this.authenticationManager = authenticationManager;
     }
 
@@ -33,7 +30,9 @@ public class AuthController {
     public Object auth() {
         // 这里没有接入数据库，保存的信息是在内存中的，因此暂时读取不到，返回的是anonymousUser 匿名用户
         String userName = SecurityContextHolder.getContext().getAuthentication().getName();
-        if (userName.contains("anonymous")) {
+        User loggedInUser = userService.getUserByUsername(userName);
+
+        if (loggedInUser == null) {
             return new Result("ok", "用户没有登录", false);
         }
         return new Result("ok", null, true, userService.getUserByUsername(userName));
@@ -49,7 +48,7 @@ public class AuthController {
         UserDetails userDetails = null;
         // 判断用户存在与否，如果不存在则直接返回
         try {
-            userDetails = userDetailsService.loadUserByUsername(username);
+            userDetails = userService.loadUserByUsername(username);
         } catch (UsernameNotFoundException e) {
             return new Result("fail", "用户不存在", false);
         }
@@ -68,8 +67,7 @@ public class AuthController {
             // Cookie
             SecurityContextHolder.getContext().setAuthentication(token);
 
-            User loggedInUser = new User(1, "张三");
-            return new Result("ok", "登录成功", true, loggedInUser);
+            return new Result("ok", "登录成功", true, userService.getUserByUsername(username));
         } catch (BadCredentialsException e) {
             return new Result("fail", "密码不正确", false);
         }
