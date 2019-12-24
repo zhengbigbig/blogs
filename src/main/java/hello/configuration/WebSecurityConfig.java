@@ -8,6 +8,7 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import javax.inject.Inject;
@@ -17,7 +18,7 @@ import javax.inject.Inject;
 // 告诉spring 加上web安全模块，设置后，所有的请求都会被拦截
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Inject
-    private UserService userService;
+    private UserDetailsService userService;
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
