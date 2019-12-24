@@ -1,10 +1,15 @@
 package hello.entity;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.Instant;
 
 public class User {
     private Integer id;
     private String username;
+    @JsonIgnore
     private String encryptedPassword;
     private String avatar;
     private Instant createdAt;
