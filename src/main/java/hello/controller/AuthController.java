@@ -2,7 +2,6 @@ package hello.controller;
 
 import hello.entity.User;
 import hello.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -11,6 +10,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
+import javax.inject.Inject;
 import java.util.Map;
 
 // Filter->构造Token->AuthenticationManager->转给Provider处理->认证处理成功后续操作或者不通过抛异常
@@ -19,7 +19,7 @@ public class AuthController {
     private UserService userService;
     private AuthenticationManager authenticationManager;
 
-    @Autowired
+    @Inject
     public AuthController(UserService userService, AuthenticationManager authenticationManager) {
         this.userService = userService;
         this.authenticationManager = authenticationManager;
@@ -30,12 +30,12 @@ public class AuthController {
     public Object auth() {
         // 这里没有接入数据库，保存的信息是在内存中的，因此暂时读取不到，返回的是anonymousUser 匿名用户
         String userName = SecurityContextHolder.getContext().getAuthentication().getName();
-        User loggedInUser = userService.getUserByUsername(userName);
+        User loggedInUser = userService.findUserByUsername(userName);
 
         if (loggedInUser == null) {
             return new Result("ok", "用户没有登录", false);
         }
-        return new Result("ok", null, true, userService.getUserByUsername(userName));
+        return new Result("ok", null, true, userService.findUserByUsername(userName));
     }
 
     @PostMapping("/auth/login")
@@ -67,7 +67,7 @@ public class AuthController {
             // Cookie
             SecurityContextHolder.getContext().setAuthentication(token);
 
-            return new Result("ok", "登录成功", true, userService.getUserByUsername(username));
+            return new Result("ok", "登录成功", true, userService.findUserByUsername(username));
         } catch (BadCredentialsException e) {
             return new Result("fail", "密码不正确", false);
         }
@@ -79,11 +79,11 @@ public class AuthController {
         boolean isLogin;
         Object data;
 
-        public Result(String status, String msg, boolean isLogin) {
+        Result(String status, String msg, boolean isLogin) {
             this(status, msg, isLogin, null);
         }
 
-        public Result(String status, String msg, boolean isLogin, Object data) {
+        Result(String status, String msg, boolean isLogin, Object data) {
             this.status = status;
             this.msg = msg;
             this.isLogin = isLogin;
