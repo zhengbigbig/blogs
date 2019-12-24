@@ -2,6 +2,7 @@ package hello.controller;
 
 import hello.entity.User;
 import hello.service.UserService;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -53,12 +54,15 @@ public class AuthController {
             return new Result("fail", "invalid password", false);
         }
 
-        User user = userService.findUserByUsername(username);
-        // 这里是有问题的，如果多线程并发同时有俩个用户用相同的名字注册呢，会判断为空保存俩次数据库
-        if (user == null) {
-            userService.save(username, password);
+
+        // 本来未考虑到并发同时注册相同用户
+        // 现在使用数据库username字段改为unique则直接保存捕获异常然后抛出错误
+        try{
+            userService.save(username,password);
             return new Result("ok", "成功!", false);
-        } else {
+
+        }catch (DuplicateKeyException e){
+            e.printStackTrace();
             return new Result("fail", "用户已存在!", false);
         }
     }
