@@ -35,7 +35,32 @@ public class AuthController {
         if (loggedInUser == null) {
             return new Result("ok", "用户没有登录", false);
         }
-        return new Result("ok", null, true, userService.findUserByUsername(userName));
+        return new Result("ok", "登录成功", true, userService.findUserByUsername(userName));
+    }
+
+    @PostMapping("/auth/register")
+    @ResponseBody
+    public Result register(@RequestBody Map<String, String> usernameAndPassword) {
+        String username = usernameAndPassword.get("username");
+        String password = usernameAndPassword.get("password");
+        if (username == null || password == null) {
+            return new Result("fail", "username or password is null", false);
+        }
+        if (username.length() < 1 || username.length() > 15) {
+            return new Result("fail", "invalid password", false);
+        }
+        if (password.length() < 1 || password.length() > 15) {
+            return new Result("fail", "invalid password", false);
+        }
+
+        User user = userService.findUserByUsername(username);
+        // 这里是有问题的，如果多线程并发同时有俩个用户用相同的名字注册呢，会判断为空保存俩次数据库
+        if (user == null) {
+            userService.save(username, password);
+            return new Result("ok", "成功!", false);
+        } else {
+            return new Result("fail", "用户已存在!", false);
+        }
     }
 
     @PostMapping("/auth/login")
@@ -45,7 +70,7 @@ public class AuthController {
         String password = usernameAndPassword.get("password");
 
         // 命令这个服务去查找真正用户名的密码，具体实现可以是去数据库去找
-        UserDetails userDetails = null;
+        UserDetails userDetails;
         // 判断用户存在与否，如果不存在则直接返回
         try {
             userDetails = userService.loadUserByUsername(username);
@@ -70,6 +95,19 @@ public class AuthController {
             return new Result("ok", "登录成功", true, userService.findUserByUsername(username));
         } catch (BadCredentialsException e) {
             return new Result("fail", "密码不正确", false);
+        }
+    }
+
+    @GetMapping("/auth/logout")
+    @ResponseBody
+    public Object logout() {
+        String userName = SecurityContextHolder.getContext().getAuthentication().getName();
+        User loggedInUser = userService.findUserByUsername(userName);
+        if (loggedInUser == null) {
+            return new Result("ok", "用户没有登录", false);
+        } else {
+            SecurityContextHolder.clearContext();
+            return new Result("ok", "注销成功", false);
         }
     }
 
