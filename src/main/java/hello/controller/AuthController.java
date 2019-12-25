@@ -34,9 +34,9 @@ public class AuthController {
         User loggedInUser = userService.findUserByUsername(userName);
 
         if (loggedInUser == null) {
-            return new Result("ok", "用户没有登录", false);
+            return Result.success("用户没有登录!", null);
         }
-        return new Result("ok", "登录成功", true, userService.findUserByUsername(userName));
+        return Result.success("登录成功!", userService.findUserByUsername(userName));
     }
 
     @PostMapping("/auth/register")
@@ -45,25 +45,25 @@ public class AuthController {
         String username = usernameAndPassword.get("username");
         String password = usernameAndPassword.get("password");
         if (username == null || password == null) {
-            return new Result("fail", "username or password is null", false);
+            return Result.failure("username or password is null");
         }
         if (username.length() < 1 || username.length() > 15) {
-            return new Result("fail", "invalid password", false);
+            return Result.failure("invalid password");
         }
         if (password.length() < 1 || password.length() > 15) {
-            return new Result("fail", "invalid password", false);
+            return Result.failure("invalid password");
         }
 
 
         // 本来未考虑到并发同时注册相同用户
         // 现在使用数据库username字段改为unique则直接保存捕获异常然后抛出错误
-        try{
-            userService.save(username,password);
-            return new Result("ok", "成功!", false);
+        try {
+            userService.save(username, password);
+            return Result.success("注册成功!", null);
 
-        }catch (DuplicateKeyException e){
+        } catch (DuplicateKeyException e) {
             e.printStackTrace();
-            return new Result("fail", "用户已存在!", false);
+            return Result.failure("用户已存在");
         }
     }
 
@@ -79,7 +79,7 @@ public class AuthController {
         try {
             userDetails = userService.loadUserByUsername(username);
         } catch (UsernameNotFoundException e) {
-            return new Result("fail", "用户不存在", false);
+            return Result.failure("用户不存在");
         }
 
         // 先构建一个未认证的token，token只是一个载体而已
@@ -95,10 +95,9 @@ public class AuthController {
             // 把用户信息保存在内存中某一个地方
             // Cookie
             SecurityContextHolder.getContext().setAuthentication(token);
-
-            return new Result("ok", "登录成功", true, userService.findUserByUsername(username));
+            return Result.success("登录成功", userService.findUserByUsername(username));
         } catch (BadCredentialsException e) {
-            return new Result("fail", "密码不正确", false);
+            return Result.failure("密码不正确");
         }
     }
 
@@ -108,10 +107,10 @@ public class AuthController {
         String userName = SecurityContextHolder.getContext().getAuthentication().getName();
         User loggedInUser = userService.findUserByUsername(userName);
         if (loggedInUser == null) {
-            return new Result("ok", "用户没有登录", false);
+            return Result.success("用户没有登录!", null);
         } else {
             SecurityContextHolder.clearContext();
-            return new Result("ok", "注销成功", false);
+            return Result.success("注销成功!", null);
         }
     }
 
@@ -120,6 +119,18 @@ public class AuthController {
         String msg;
         boolean isLogin;
         Object data;
+
+        public static Result failure(String msg) {
+            return new Result("fail", msg, false);
+        }
+
+        public static Result success(String msg, Object data) {
+            if (data == null) {
+                return new Result("ok", msg, true);
+            } else {
+                return new Result("ok", msg, false, data);
+            }
+        }
 
         Result(String status, String msg, boolean isLogin) {
             this(status, msg, isLogin, null);
