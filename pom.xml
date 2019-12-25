@@ -47,17 +47,17 @@
             <artifactId>spring-boot-starter-freemarker</artifactId>
             <version>2.2.2.RELEASE</version>
         </dependency>
-        <!-- junit -->
+        <!-- junit5 -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
-            <version>5.4.2</version>
+            <version>5.5.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
-            <version>5.4.2</version>
+            <version>5.5.2</version>
             <scope>test</scope>
         </dependency>
 
@@ -83,11 +83,12 @@
             </plugin>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.22.1</version>
-                <configuration>
-                    <argLine>-Dfile.encoding=UTF-8</argLine>
-                </configuration>
+                <version>2.22.2</version>
             </plugin>
+<!--            <plugin>-->
+<!--                <artifactId>maven-failsafe-plugin</artifactId>-->
+<!--                <version>2.22.2</version>-->
+<!--            </plugin>-->
             <plugin>
                 <artifactId>maven-checkstyle-plugin</artifactId>
                 <version>3.0.0</version>
@@ -141,9 +142,9 @@
                 <artifactId>flyway-maven-plugin</artifactId>
                 <version>6.0.8</version>
                 <configuration>
-                    <url>jdbc:mysql://localhost:3306/test?characterEncoding=utf-8</url>
+                    <url>jdbc:mysql://localhost:3306/test</url>
                     <user>root</user>
-                    <password>root</password>
+                    <password>my-secret-pw</password>
                 </configuration>
             </plugin>
         </plugins>
