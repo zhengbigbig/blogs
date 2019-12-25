@@ -31,12 +31,12 @@ public class AuthController {
     public Object auth() {
         // 这里没有接入数据库，保存的信息是在内存中的，因此暂时读取不到，返回的是anonymousUser 匿名用户
         String userName = SecurityContextHolder.getContext().getAuthentication().getName();
-        User loggedInUser = userService.findUserByUsername(userName);
+        User loggedInUser = userService.getUserByUsername(userName);
 
         if (loggedInUser == null) {
             return Result.success("用户没有登录!", null);
         }
-        return Result.success("登录成功!", userService.findUserByUsername(userName));
+        return Result.success("登录成功!", userService.getUserByUsername(userName));
     }
 
     @PostMapping("/auth/register")
@@ -95,7 +95,7 @@ public class AuthController {
             // 把用户信息保存在内存中某一个地方
             // Cookie
             SecurityContextHolder.getContext().setAuthentication(token);
-            return Result.success("登录成功", userService.findUserByUsername(username));
+            return Result.success("登录成功", userService.getUserByUsername(username));
         } catch (BadCredentialsException e) {
             return Result.failure("密码不正确");
         }
@@ -105,7 +105,7 @@ public class AuthController {
     @ResponseBody
     public Object logout() {
         String userName = SecurityContextHolder.getContext().getAuthentication().getName();
-        User loggedInUser = userService.findUserByUsername(userName);
+        User loggedInUser = userService.getUserByUsername(userName);
         if (loggedInUser == null) {
             return Result.success("用户没有登录!", null);
         } else {

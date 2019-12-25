@@ -28,17 +28,17 @@ public class UserService implements UserDetailsService {
         userMapper.save(username, bCryptPasswordEncoder.encode(password));
     }
 
-    public User findUserByUsername(String username) {
+    public User getUserByUsername(String username) {
         return userMapper.findUserByUsername(username);
     }
 
     // 自定义UserDetailsService
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        if (findUserByUsername(username) == null) {
+        if (getUserByUsername(username) == null) {
             throw new UsernameNotFoundException(username + "不存在！");
         }
-        User user = findUserByUsername(username);
+        User user = getUserByUsername(username);
 
         return new org.springframework.security.core.userdetails.User(username, user.getEncryptedPassword(), Collections.emptyList());
     }
