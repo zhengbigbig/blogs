@@ -6,6 +6,7 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -13,12 +14,15 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 // Filter->构造Token->AuthenticationManager->转给Provider处理->认证处理成功后续操作或者不通过抛异常
 @RestController
 public class AuthController {
     private UserService userService;
     private AuthenticationManager authenticationManager;
+    private final Pattern USERNAME_STANDARD = Pattern.compile("^(?!_)(?!.*?_$)[a-zA-Z0-9_\\u4e00-\\u9fa5]{2,15}$");
+    private final Pattern PASSWORD_STANDARD = Pattern.compile("^[A-Za-z0-9.\\-_]{6,16}$");
 
     @Inject
     public AuthController(UserService userService, AuthenticationManager authenticationManager) {
@@ -30,13 +34,13 @@ public class AuthController {
     @ResponseBody // 将返回值限定在body里面
     public Object auth() {
         // 这里没有接入数据库，保存的信息是在内存中的，因此暂时读取不到，返回的是anonymousUser 匿名用户
-        String userName = SecurityContextHolder.getContext().getAuthentication().getName();
-        User loggedInUser = userService.getUserByUsername(userName);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User loggedInUser = userService.getUserByUsername(authentication == null ? null : authentication.getName());
 
         if (loggedInUser == null) {
             return Result.success("用户没有登录!", null);
         }
-        return Result.success("登录成功!", userService.getUserByUsername(userName));
+        return Result.success("用户已登录!", loggedInUser);
     }
 
     @PostMapping("/auth/register")
@@ -44,17 +48,12 @@ public class AuthController {
     public Result register(@RequestBody Map<String, String> usernameAndPassword) {
         String username = usernameAndPassword.get("username");
         String password = usernameAndPassword.get("password");
-        if (username == null || password == null) {
-            return Result.failure("username or password is null");
+        if (!USERNAME_STANDARD.matcher(username).find()) {
+            return Result.failure("invalid username");
         }
-        if (username.length() < 1 || username.length() > 15) {
+        if (!PASSWORD_STANDARD.matcher(password).find()) {
             return Result.failure("invalid password");
         }
-        if (password.length() < 1 || password.length() > 15) {
-            return Result.failure("invalid password");
-        }
-
-
         // 本来未考虑到并发同时注册相同用户
         // 现在使用数据库username字段改为unique则直接保存捕获异常然后抛出错误
         try {
