@@ -19,7 +19,7 @@ public class BlogServiceTest {
 
     @Test
     void testGetBlogs() {
-        blogService.getBlogs(1,1,1);
-        verify(blogDao).getBlogs(1,1,1);
+        blogService.getBlogs(1, 1, 1);
+        verify(blogDao).getBlogs(1, 1, 1);
     }
 }
