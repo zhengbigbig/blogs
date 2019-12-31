@@ -2,6 +2,7 @@ package hello.service;
 
 import hello.dao.BlogDao;
 import hello.entity.Blog;
+import hello.entity.BlogResult;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
@@ -16,7 +17,14 @@ public class BlogService {
         this.blogDao = blogDao;
     }
 
-    public List<Blog> getBlogs(Integer page, Integer pageSize, Integer userId) {
-        return blogDao.getBlogs(page, pageSize, userId);
+    public BlogResult getBlogs(Integer page, Integer pageSize, Integer userId) {
+        try {
+            List<Blog> blogs = blogDao.getBlogs(page, pageSize, userId);
+            int total = blogDao.count(userId);
+            int pageCount = total % pageSize == 0 ? total / pageSize : total / pageSize + 1;
+            return BlogResult.newResults(blogs, total, page, pageCount);
+        } catch (Exception e) {
+            return BlogResult.failure("系统异常");
+        }
     }
 }

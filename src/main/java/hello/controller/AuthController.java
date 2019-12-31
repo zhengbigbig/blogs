@@ -1,5 +1,6 @@
 package hello.controller;
 
+import hello.entity.LoginResult;
 import hello.entity.User;
 import hello.service.UserService;
 import org.springframework.dao.DuplicateKeyException;
@@ -38,37 +39,37 @@ public class AuthController {
         User loggedInUser = userService.getUserByUsername(authentication == null ? null : authentication.getName());
 
         if (loggedInUser == null) {
-            return Result.success("用户没有登录!", null);
+            return LoginResult.success("用户没有登录!", null);
         }
-        return Result.success("用户已登录!", loggedInUser);
+        return LoginResult.success("用户已登录!", loggedInUser);
     }
 
     @PostMapping("/auth/register")
     @ResponseBody
-    public Result register(@RequestBody Map<String, String> usernameAndPassword) {
+    public LoginResult register(@RequestBody Map<String, String> usernameAndPassword) {
         String username = usernameAndPassword.get("username");
         String password = usernameAndPassword.get("password");
         if (!USERNAME_STANDARD.matcher(username).find()) {
-            return Result.failure("invalid username");
+            return LoginResult.failure("invalid username");
         }
         if (!PASSWORD_STANDARD.matcher(password).find()) {
-            return Result.failure("invalid password");
+            return LoginResult.failure("invalid password");
         }
         // 本来未考虑到并发同时注册相同用户
         // 现在使用数据库username字段改为unique则直接保存捕获异常然后抛出错误
         try {
             userService.save(username, password);
-            return Result.success("注册成功!", null);
+            return LoginResult.success("注册成功!", null);
 
         } catch (DuplicateKeyException e) {
             e.printStackTrace();
-            return Result.failure("用户已存在");
+            return LoginResult.failure("用户已存在");
         }
     }
 
     @PostMapping("/auth/login")
     @ResponseBody
-    public Result login(@RequestBody Map<String, String> usernameAndPassword) {
+    public LoginResult login(@RequestBody Map<String, String> usernameAndPassword) {
         String username = usernameAndPassword.get("username");
         String password = usernameAndPassword.get("password");
 
@@ -78,7 +79,7 @@ public class AuthController {
         try {
             userDetails = userService.loadUserByUsername(username);
         } catch (UsernameNotFoundException e) {
-            return Result.failure("用户不存在");
+            return LoginResult.failure("用户不存在");
         }
 
         // 先构建一个未认证的token，token只是一个载体而已
@@ -94,9 +95,9 @@ public class AuthController {
             // 把用户信息保存在内存中某一个地方
             // Cookie
             SecurityContextHolder.getContext().setAuthentication(token);
-            return Result.success("登录成功", userService.getUserByUsername(username));
+            return LoginResult.success("登录成功", userService.getUserByUsername(username));
         } catch (BadCredentialsException e) {
-            return Result.failure("密码不正确");
+            return LoginResult.failure("密码不正确");
         }
     }
 
@@ -106,57 +107,12 @@ public class AuthController {
         String userName = SecurityContextHolder.getContext().getAuthentication().getName();
         User loggedInUser = userService.getUserByUsername(userName);
         if (loggedInUser == null) {
-            return Result.success("用户没有登录!", null);
+            return LoginResult.success("用户没有登录!", null);
         } else {
             SecurityContextHolder.clearContext();
-            return Result.success("注销成功!", null);
+            return LoginResult.success("注销成功!", null);
         }
     }
 
-    private static class Result {
-        String status;
-        String msg;
-        boolean isLogin;
-        Object data;
-
-        public static Result failure(String msg) {
-            return new Result("fail", msg, false);
-        }
-
-        public static Result success(String msg, Object data) {
-            if (data == null) {
-                return new Result("ok", msg, true);
-            } else {
-                return new Result("ok", msg, false, data);
-            }
-        }
-
-        Result(String status, String msg, boolean isLogin) {
-            this(status, msg, isLogin, null);
-        }
-
-        Result(String status, String msg, boolean isLogin, Object data) {
-            this.status = status;
-            this.msg = msg;
-            this.isLogin = isLogin;
-            this.data = data;
-        }
-
-        public String getStatus() {
-            return status;
-        }
-
-        public String getMsg() {
-            return msg;
-        }
-
-        public boolean isLogin() {
-            return isLogin;
-        }
-
-        public Object getData() {
-            return data;
-        }
-    }
 
 }
