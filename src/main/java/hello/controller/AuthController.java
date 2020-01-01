@@ -1,47 +1,45 @@
 package hello.controller;
 
 import hello.entity.LoginResult;
-import hello.entity.User;
+import hello.service.AuthService;
 import hello.service.UserService;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
 import java.util.Map;
 import java.util.regex.Pattern;
 
 // Filter->构造Token->AuthenticationManager->转给Provider处理->认证处理成功后续操作或者不通过抛异常
 @RestController
 public class AuthController {
-    private UserService userService;
-    private AuthenticationManager authenticationManager;
+    private final UserService userService;
+    private final AuthenticationManager authenticationManager;
+    private final AuthService authService;
     private final Pattern USERNAME_STANDARD = Pattern.compile("^(?!_)(?!.*?_$)[a-zA-Z0-9_\\u4e00-\\u9fa5]{2,15}$");
     private final Pattern PASSWORD_STANDARD = Pattern.compile("^[A-Za-z0-9.\\-_]{6,16}$");
 
     @Inject
-    public AuthController(UserService userService, AuthenticationManager authenticationManager) {
+    public AuthController(UserService userService, AuthenticationManager authenticationManager, AuthService authService) {
         this.userService = userService;
         this.authenticationManager = authenticationManager;
+        this.authService = authService;
     }
 
     @GetMapping("/auth")
     @ResponseBody // 将返回值限定在body里面
     public Object auth() {
         // 这里没有接入数据库，保存的信息是在内存中的，因此暂时读取不到，返回的是anonymousUser 匿名用户
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        User loggedInUser = userService.getUserByUsername(authentication == null ? null : authentication.getName());
-
-        if (loggedInUser == null) {
-            return LoginResult.success("用户没有登录!", null);
-        }
-        return LoginResult.success("用户已登录!", loggedInUser);
+        return authService.getCurrentUser()
+                .map(LoginResult::success)
+                .orElse(LoginResult.success("用户没有登录", false));
     }
 
     @PostMapping("/auth/register")
@@ -69,7 +67,11 @@ public class AuthController {
 
     @PostMapping("/auth/login")
     @ResponseBody
-    public LoginResult login(@RequestBody Map<String, String> usernameAndPassword) {
+    public Object login(@RequestBody Map<String, String> usernameAndPassword, HttpServletRequest request) {
+//        if (request.getHeader("user-agent") == null || !request.getHeader("user-agent").contains("Mozilla")) {
+//            return "死爬虫去死吧";
+//        }
+
         String username = usernameAndPassword.get("username");
         String password = usernameAndPassword.get("password");
 
@@ -103,15 +105,11 @@ public class AuthController {
 
     @GetMapping("/auth/logout")
     @ResponseBody
-    public Object logout() {
-        String userName = SecurityContextHolder.getContext().getAuthentication().getName();
-        User loggedInUser = userService.getUserByUsername(userName);
-        if (loggedInUser == null) {
-            return LoginResult.success("用户没有登录!", null);
-        } else {
-            SecurityContextHolder.clearContext();
-            return LoginResult.success("注销成功!", null);
-        }
+    public LoginResult logout() {
+        SecurityContextHolder.clearContext();
+        return authService.getCurrentUser()
+                .map(user -> LoginResult.success("注销成功", false))
+                .orElse(LoginResult.failure("用户没有登录"));
     }
 
 

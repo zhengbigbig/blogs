@@ -2,6 +2,7 @@ package hello.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
+import hello.service.AuthService;
 import hello.service.UserService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,9 +15,7 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
@@ -51,7 +50,8 @@ class AuthControllerTest {
     // 对每个测试构建
     @BeforeEach
     void setUp() {
-        mvc = MockMvcBuilders.standaloneSetup(new AuthController(userService, authenticationManager)).build();
+        AuthService authService = new AuthService(userService);
+        mvc = MockMvcBuilders.standaloneSetup(new AuthController(userService, authenticationManager, authService)).build();
     }
 
     //
@@ -93,7 +93,7 @@ class AuthControllerTest {
 
         assert session != null;
         mvc.perform(get("/auth").session((MockHttpSession) session)).andExpect(status().isOk())
-                .andExpect(mvcResult -> Assertions.assertTrue(mvcResult.getResponse().getContentAsString(Charset.defaultCharset()).contains("已登录")));
+                .andExpect(mvcResult -> Assertions.assertTrue(mvcResult.getResponse().getContentAsString(Charset.defaultCharset()).contains("myUser")));
     }
 
     /*
@@ -123,45 +123,4 @@ class AuthControllerTest {
                 .andExpect(result -> Assertions.assertTrue(result.getResponse().getContentAsString(Charset.defaultCharset()).contains(expectation)));
     }
 
-    /*
-     * 当没有登录时，验证返回是否正确
-     * 当用户登录后，验证返回信息是否正确
-     */
-    @Test
-    public void testLogout() throws Exception {
-        String username = "myUser";
-        String password = "myPwd";
-        ImmutableMap<String, String> usernamePwd = ImmutableMap.of("username", username, "password", password);
-        UserDetails userDetails = new User(username, bCryptPasswordEncoder.encode(password), Collections.emptyList());
-
-        // 上下文置空
-        when(context.getAuthentication()).thenReturn(auth);
-        when(context.getAuthentication().getName()).thenReturn(null);
-        when(userService.getUserByUsername(null)).thenReturn(null);
-        SecurityContextHolder.setContext(context);
-        mvc.perform(get("/auth/logout"))
-                .andExpect(status().isOk())
-                .andExpect(result ->
-                        Assertions.assertTrue(result.getResponse().getContentAsString(Charset.defaultCharset()).contains("没有登录")));
-
-
-        when(userService.loadUserByUsername(username)).thenReturn(userDetails);
-
-        String s = new ObjectMapper().writeValueAsString(usernamePwd); // json
-
-        mvc.perform(post("/auth/login")
-                .contentType(MediaType.APPLICATION_JSON).content(s))
-                .andExpect(status().isOk())
-                .andExpect(result -> Assertions.assertTrue(result.getResponse().getContentAsString(Charset.defaultCharset()).contains("登录成功")));
-
-        when(context.getAuthentication()).thenReturn(auth);
-        when(context.getAuthentication().getName()).thenReturn(username);
-        when(userService.getUserByUsername(username)).thenReturn(new hello.entity.User(1, username, bCryptPasswordEncoder.encode(password)));
-
-        SecurityContextHolder.setContext(context);
-
-        mvc.perform(get("/auth/logout"))
-                .andExpect(status().isOk())
-                .andExpect(result -> Assertions.assertTrue(result.getResponse().getContentAsString(Charset.defaultCharset()).contains("注销成功")));
-    }
 }
