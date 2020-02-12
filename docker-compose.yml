@@ -1,0 +1,69 @@
+version: '3'
+
+#  定义服务
+services:
+  # spring-boot服务
+  app:
+    container_name: blogs
+      image: blogs
+      tty: true
+    build:
+      context: . # 配置需要构建Dockerfile的路径 相对于docker-compose.yml
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    restart: always
+    environment: # Pass environment variables to the service
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/card?useUnicode=true&characterEncoding=utf8&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: my-secret-pw
+    depends_on:
+      - db # 需要依赖的服务 率先构建
+#      - redis
+  #    networks: # 网络 连接mysql和redis
+  #      - backend
+  db:
+    image: mysql
+    ports:
+      - "3306:3306"
+    #    command: [
+    #      '--character-set-server=utf8mb4',
+    #      '--collation-server=utf8mb4_unicode_ci'
+    #    ]
+    restart: always
+    environment:
+      MYSQL_DATABASE: blogs
+      #      MYSQL_USER: root
+      MYSQL_ROOT_HOST: '%'
+      MYSQL_ROOT_PASSWORD: my-secret-pw
+    volumes:
+      - ./config/sql:/var/lib/mysql
+  #    networks:
+  #      - backend
+#  redis:
+#    image: redis
+#    command: [ "redis-server", "--appendonly", "yes" ]
+#    hostname:
+#      redis
+#    ports:
+#      - "6379:6379"
+#    restart: always
+#    volumes:
+#      - ./config/redis/data:/data
+#    networks:
+#      - backend
+#  nginx:
+#    container_name: my-nginx
+#    image: nginx
+#    restart: always
+#    volumes:
+#      - ./config/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+##      - ./config/nginx/error.log:/etc/nginx/logs/error.log
+##      - ./config/nginx/html:/usr/share/nginx/html:ro
+#    ports:
+#      - 80:80
+#      - 443:443
+#volumes:
+#  sql:
+#networks:
+#  backend:
