@@ -1,6 +1,9 @@
 package hello.controller;
 
+import com.alibaba.fastjson.JSON;
 import hello.entity.LoginResult;
+import hello.entity.MailResult;
+import hello.entity.User;
 import hello.service.AuthService;
 import hello.service.UserService;
 import org.springframework.dao.DuplicateKeyException;
@@ -26,6 +29,7 @@ public class AuthController {
     private final Pattern USERNAME_STANDARD = Pattern.compile("^(?!_)(?!.*?_$)[a-zA-Z0-9_\\u4e00-\\u9fa5]{2,15}$");
     private final Pattern PASSWORD_STANDARD = Pattern.compile("^[A-Za-z0-9.\\-_]{6,16}$");
 
+
     @Inject
     public AuthController(UserService userService, AuthenticationManager authenticationManager, AuthService authService) {
         this.userService = userService;
@@ -42,11 +46,17 @@ public class AuthController {
                 .orElse(LoginResult.success("用户没有登录", false));
     }
 
+    @PostMapping("/auth/sendMail")
+    @ResponseBody
+    public MailResult sendMail(@RequestBody Map<String,String> registerUser) {
+        return userService.sendMail(registerUser);
+    }
+
     @PostMapping("/auth/register")
     @ResponseBody
-    public LoginResult register(@RequestBody Map<String, String> usernameAndPassword) {
-        String username = usernameAndPassword.get("username");
-        String password = usernameAndPassword.get("password");
+    public LoginResult register(@RequestBody Map<String,String> registerUser) {
+        String username = registerUser.get("username");
+        String password = registerUser.get("password");
         if (!USERNAME_STANDARD.matcher(username).find()) {
             return LoginResult.failure("invalid username");
         }
