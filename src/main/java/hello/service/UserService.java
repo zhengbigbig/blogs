@@ -1,10 +1,9 @@
 package hello.service;
 
+import com.google.common.collect.ImmutableMap;
 import hello.dao.MailDao;
-import hello.dao.UserMapper;
-import hello.entity.Mail;
-import hello.entity.MailResult;
-import hello.entity.User;
+import hello.dao.UserDao;
+import hello.entity.*;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -22,47 +21,60 @@ import java.util.Random;
 public class UserService implements UserDetailsService {
 
     private BCryptPasswordEncoder bCryptPasswordEncoder;
-    private UserMapper userMapper;
+    private UserDao userDao;
     private MailDao mailDao;
     private MailService mailService;
 
     @Inject
-    public UserService(BCryptPasswordEncoder bCryptPasswordEncoder, UserMapper userMapper, MailDao mailDao, MailService mailService) {
+    public UserService(BCryptPasswordEncoder bCryptPasswordEncoder, UserDao userDao, MailDao mailDao, MailService mailService) {
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
-        this.userMapper = userMapper;
+        this.userDao = userDao;
         this.mailDao = mailDao;
         this.mailService = mailService;
-    }
-
-    public void save(String username, String password, String email) {
-        userMapper.save(username, bCryptPasswordEncoder.encode(password), email);
-    }
-
-    public User getUserByUsername(String username) {
-        return userMapper.findUserByUsernameOrEmail(username);
     }
 
     // 自定义UserDetailsService
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        if (getUserByUsername(username) == null) {
+        if (getUserByUsernameOrEmail(username) == null) {
             throw new UsernameNotFoundException(username + "不存在！");
         }
-        User user = getUserByUsername(username);
+        User user = getUserByUsernameOrEmail(username);
 
         return new org.springframework.security.core.userdetails.User(username, user.getEncryptedPassword(), Collections.emptyList());
     }
 
-    public MailResult sendMailIfSuccessThenSaveSms(Map<String, String> registerUser) {
-        // 生成6位验证码并发送邮件
+    public void save(String username, String password, String email) {
+        ImmutableMap<String, String> user = ImmutableMap.of(
+                "username", username, "password", bCryptPasswordEncoder.encode(password), "email", email
+        );
+        userDao.save(user);
+    }
+
+    public User getUserByUsernameOrEmail(String username) {
+        return userDao.findUserByUsernameOrEmail(username);
+    }
+
+    public int updateUser(User user) {
+        return userDao.updateUser(user);
+    }
+
+    public int updateUserPassword(User user, String password) {
+        user.setEncryptedPassword(bCryptPasswordEncoder.encode(password));
+        return userDao.updateUser(user);
+    }
+
+    // 生成6位验证码并发送邮件，发送后存入数据库
+    public Result<Object> sendMailIfSuccessThenSaveSms(Map<String, String> registerUser) {
+        String email = registerUser.get("email");
         Integer code = new Random().nextInt(999999);
         try {
             mailService.sendMail(registerUser, code);
-            mailDao.insertSms(new Mail(registerUser.get("email"), code));
-            return MailResult.success(String.valueOf(code));
+            mailDao.insertSms(new Mail(email, code));
+            return MailResult.success("获取成功", new Mail(email, code));
         } catch (Exception e) {
             e.printStackTrace();
-            return MailResult.success("邮件发送异常");
+            return NormalResult.failure("邮件发送异常");
         }
 
     }
@@ -73,7 +85,12 @@ public class UserService implements UserDetailsService {
                 .orElse(-1);
     }
 
-    public Mail updateSms(String email) {
+    public boolean isEqualSms(String email, Integer fromRequest) {
+        Integer sms = getSmsByEmail(email);
+        return sms != -1 && sms.equals(fromRequest);
+    }
+
+    public int updateSms(String email) {
         return mailDao.updateSms(email);
     }
 

@@ -24,20 +24,20 @@ public class MailService {
      * @param from 发件人邮箱地址
      */
     private JavaMailSender javaMailSender;
-    private String TEXT = "  <div>\n" +
-            "      <hr>\n" +
-            "  <div style=\"color:#4D4D4D;font-size:15px;margin:20px\">\n" +
-            "      <div style=\"font-weight:500;margin:20px 0;\">尊敬的用户：<span style=\"color:#ff6600;font-size:20px;margin:0 5px;text-decoration\">%s</span>，您好！</div>\n" +
-            "  <div style=\"font-weight:500\">本次操作验证码为：<span style=\"color:red;font-size:20px\">%d</span></div>\n" +
-            "    <div style=\"font-size:12px;margin:20px 0;color:#747474\">\n" +
-            "      注意：此操作可能会修改您的密码。如非本人操作，请及时登录并修改密码以保证帐户安全!\n" +
-            "    </div>\n" +
-            "  </div>\n" +
-            "  <hr>\n" +
-            "  <div style=\"font-size:12px;margin:20px;color:#747474\">\n" +
-            "    <p>此为系统邮件，请勿回复</p>\n" +
-            "    <p>祝您生活愉快，学习进步</p>\n" +
-            "  </div>\n" +
+    private String TEXT = "  <div>%n" +
+            "      <hr>%n" +
+            "  <div style=\"color:#4D4D4D;font-size:15px;margin:20px\">%n" +
+            "      <div style=\"font-weight:500;margin:20px 0;\">尊敬的用户：<span style=\"color:#ff6600;font-size:20px;margin:0 5px;text-decoration\">%s</span>，您好！</div>%n" +
+            "  <div style=\"font-weight:500\">本次操作验证码为：<span style=\"color:red;font-size:20px\">%d</span></div>%n" +
+            "    <div style=\"font-size:12px;margin:20px 0;color:#747474\">%n" +
+            "      注意：此操作可能会修改您的密码。如非本人操作，请及时登录并修改密码以保证帐户安全!%n" +
+            "    </div>%n" +
+            "  </div>%n" +
+            "  <hr>%n" +
+            "  <div style=\"font-size:12px;margin:20px;color:#747474\">%n" +
+            "    <p>此为系统邮件，请勿回复</p>%n" +
+            "    <p>祝您生活愉快，学习进步</p>%n" +
+            "  </div>%n" +
             "  </div>";
 
     @Inject

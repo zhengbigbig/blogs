@@ -19,6 +19,6 @@ public class AuthService {
 
     public Optional<User> getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return Optional.ofNullable(userService.getUserByUsername(authentication == null ? null : authentication.getName()));
+        return Optional.ofNullable(userService.getUserByUsernameOrEmail(authentication == null ? null : authentication.getName()));
     }
 }

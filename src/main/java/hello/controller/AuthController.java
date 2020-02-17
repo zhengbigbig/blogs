@@ -1,7 +1,9 @@
 package hello.controller;
 
 import hello.entity.LoginResult;
-import hello.entity.MailResult;
+import hello.entity.NormalResult;
+import hello.entity.Result;
+import hello.entity.User;
 import hello.service.AuthService;
 import hello.service.UserService;
 import hello.utils.ValidateUtils;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Map;
+import java.util.Optional;
 
 // Filter->构造Token->AuthenticationManager->转给Provider处理->认证处理成功后续操作或者不通过抛异常
 @RestController
@@ -43,7 +46,7 @@ public class AuthController {
 
     @PostMapping("/auth/sendMail")
     @ResponseBody
-    public MailResult sendMail(@RequestBody Map<String, String> registerUser) {
+    public Result<Object> sendMail(@RequestBody Map<String, String> registerUser) {
         return userService.sendMailIfSuccessThenSaveSms(registerUser);
     }
 
@@ -53,6 +56,7 @@ public class AuthController {
         String username = registerUser.get("username");
         String password = registerUser.get("password");
         String email = registerUser.get("email");
+        String sms = registerUser.get("sms");
 
         if (!ValidateUtils.username(username)) {
             return LoginResult.failure("invalid username");
@@ -61,9 +65,8 @@ public class AuthController {
             return LoginResult.failure("invalid password");
         }
 
-        Integer sms = userService.getSmsByEmail(email);
-        if (!(sms != -1 && sms.equals(Integer.parseInt(registerUser.get("sms"))))) {
-            return LoginResult.failure("invalid sms_code");
+        if (!userService.isEqualSms(email, Integer.parseInt(sms))) {
+            return LoginResult.failure("invalid sms");
         }
 
         // 本来未考虑到并发同时注册相同用户
@@ -111,7 +114,7 @@ public class AuthController {
             // 把用户信息保存在内存中某一个地方
             // Cookie
             SecurityContextHolder.getContext().setAuthentication(token);
-            return LoginResult.success("登录成功", userService.getUserByUsername(username));
+            return LoginResult.success("登录成功", userService.getUserByUsernameOrEmail(username));
         } catch (BadCredentialsException e) {
             return LoginResult.failure("密码不正确");
         }
@@ -128,8 +131,27 @@ public class AuthController {
 
     @PostMapping("/auth/resetPw")
     @ResponseBody
-    public void resetPw(@RequestBody Map<String, String> resetParamas) {
+    public NormalResult resetPw(@RequestBody Map<String, String> resetParamas) {
+        // email -> 查用户 然后对用户密码进行修改
+        // 然后update用户密码
+        String email = resetParamas.get("email");
+        String password = resetParamas.get("password");
+        String sms = resetParamas.get("sms");
 
+        Optional<User> user = Optional.ofNullable(
+                userService.getUserByUsernameOrEmail(email));
+        if (!user.isPresent()) {
+            return NormalResult.failure("invalid email");
+        }
+        // 验证验证码是否一致
+        if (!userService.isEqualSms(email, Integer.parseInt(sms))) {
+            return NormalResult.failure("invalid sms_code");
+        }
+        if (userService.updateUserPassword(user.get(), password) > 0) {
+            return NormalResult.success("修改成功");
+        } else {
+            return NormalResult.failure("修改失败");
+        }
     }
 
 }

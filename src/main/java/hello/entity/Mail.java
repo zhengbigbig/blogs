@@ -1,6 +1,6 @@
 package hello.entity;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.time.Instant;
 
@@ -9,13 +9,15 @@ import java.time.Instant;
  */
 
 public class Mail {
+    @JsonIgnore
     private Integer id;
     private String email;
     private Integer sms;
+    @JsonIgnore
     private Integer usable;
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    @JsonIgnore
     private Instant createdAt;
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    @JsonIgnore
     private Instant deadLine;
 
     // Mybatis框架会调用这个默认构造方法来构造实例对象，即实体类需要通过Mybatis进行动态反射生成。

@@ -19,13 +19,11 @@ public class MailDao {
         return sqlSession.selectOne("selectValidSms", email);
     }
 
-    public Mail insertSms(Mail mail) {
-        sqlSession.insert("insertSms", mail);
-        return getSmsByEmail(mail.getEmail());
+    public int insertSms(Mail mail) {
+        return sqlSession.insert("insertSms", mail);
     }
 
-    public Mail updateSms(String email) {
-        sqlSession.update("updateSms", email);
-        return getSmsByEmail(email);
+    public int updateSms(String email) {
+        return sqlSession.update("updateSms", email);
     }
 }

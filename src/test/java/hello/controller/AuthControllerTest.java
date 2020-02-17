@@ -80,7 +80,7 @@ class AuthControllerTest {
         ImmutableMap<String, String> usernamePwd = ImmutableMap.of("username", "myUser", "password", "myPwd");
         // 避免空指针异常，使用mock的值
         when(userService.loadUserByUsername("myUser")).thenReturn(new User("myUser", bCryptPasswordEncoder.encode("myPwd"), Collections.emptyList()));
-        when(userService.getUserByUsername("myUser")).thenReturn(new hello.entity.User(1, "myUser", bCryptPasswordEncoder.encode("myPwd")));
+        when(userService.getUserByUsernameOrEmail("myUser")).thenReturn(new hello.entity.User(1, "myUser", bCryptPasswordEncoder.encode("myPwd")));
 
         String s = new ObjectMapper().writeValueAsString(usernamePwd); // json
         MvcResult response = mvc.perform(post("/auth/login")
@@ -101,7 +101,6 @@ class AuthControllerTest {
      */
     @Test
     void testRegister() throws Exception {
-        when(userService.getSmsByEmail("1@qq.com")).thenReturn(111111);
         ImmutableMap<String, String> usernamePwd = ImmutableMap.of(
                 "username", "用户名_a1", "password", "zA_.-a12",
                 "email", "1@qq.com", "sms", "111111"
@@ -112,6 +111,7 @@ class AuthControllerTest {
         ImmutableMap<String, String> errorPwd = ImmutableMap.of(
                 "username", "myUser", "password", "12345"
         );
+        when(userService.isEqualSms("1@qq.com", 111111)).thenReturn(true);
         testRegisterValidateReturn(usernamePwd, "注册成功");
         testRegisterValidateReturn(errorUsername, "invalid username");
         testRegisterValidateReturn(errorPwd, "invalid password");

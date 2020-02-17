@@ -5,14 +5,8 @@ public class MailResult extends Result<Object> {
         super(status, msg, data);
     }
 
-    public static MailResult success(String msg) {
-        return new MailResult(ResultStatus.OK, msg, null);
+    public static MailResult success(String msg, Mail mail) {
+        return new MailResult(ResultStatus.OK, msg, mail);
     }
-
-
-    public static MailResult failure(String msg) {
-        return new MailResult(ResultStatus.FAIL, msg, null);
-    }
-
 
 }
