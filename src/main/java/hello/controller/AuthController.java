@@ -1,11 +1,10 @@
 package hello.controller;
 
-import com.alibaba.fastjson.JSON;
 import hello.entity.LoginResult;
 import hello.entity.MailResult;
-import hello.entity.User;
 import hello.service.AuthService;
 import hello.service.UserService;
+import hello.utils.ValidateUtils;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -18,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 // Filter->构造Token->AuthenticationManager->转给Provider处理->认证处理成功后续操作或者不通过抛异常
 @RestController
@@ -26,9 +24,6 @@ public class AuthController {
     private final UserService userService;
     private final AuthenticationManager authenticationManager;
     private final AuthService authService;
-    private final Pattern USERNAME_STANDARD = Pattern.compile("^(?!_)(?!.*?_$)[a-zA-Z0-9_\\u4e00-\\u9fa5]{2,15}$");
-    private final Pattern PASSWORD_STANDARD = Pattern.compile("^[A-Za-z0-9.\\-_]{6,16}$");
-
 
     @Inject
     public AuthController(UserService userService, AuthenticationManager authenticationManager, AuthService authService) {
@@ -48,27 +43,34 @@ public class AuthController {
 
     @PostMapping("/auth/sendMail")
     @ResponseBody
-    public MailResult sendMail(@RequestBody Map<String,String> registerUser) {
-        return userService.sendMail(registerUser);
+    public MailResult sendMail(@RequestBody Map<String, String> registerUser) {
+        return userService.sendMailIfSuccessThenSaveSms(registerUser);
     }
 
     @PostMapping("/auth/register")
     @ResponseBody
-    public LoginResult register(@RequestBody Map<String,String> registerUser) {
+    public LoginResult register(@RequestBody Map<String, String> registerUser) {
         String username = registerUser.get("username");
         String password = registerUser.get("password");
-        String sms = registerUser.get("sms");
+        String email = registerUser.get("email");
 
-        if (!USERNAME_STANDARD.matcher(username).find()) {
+        if (!ValidateUtils.username(username)) {
             return LoginResult.failure("invalid username");
         }
-        if (!PASSWORD_STANDARD.matcher(password).find()) {
+        if (!ValidateUtils.password(password)) {
             return LoginResult.failure("invalid password");
         }
+
+        Integer sms = userService.getSmsByEmail(email);
+        if (!(sms != -1 && sms.equals(Integer.parseInt(registerUser.get("sms"))))) {
+            return LoginResult.failure("invalid sms_code");
+        }
+
         // 本来未考虑到并发同时注册相同用户
         // 现在使用数据库username字段改为unique则直接保存捕获异常然后抛出错误
         try {
-            userService.save(username, password);
+            userService.updateSms(email);
+            userService.save(username, password, email);
             return LoginResult.success("注册成功!", null);
 
         } catch (DuplicateKeyException e) {
@@ -121,8 +123,13 @@ public class AuthController {
         SecurityContextHolder.clearContext();
         return authService.getCurrentUser()
                 .map(user -> LoginResult.success("注销成功", false))
-                .orElse(LoginResult.failure("用户没有登录"));
+                .orElse(LoginResult.failure("注销成功！"));
     }
 
+    @PostMapping("/auth/resetPw")
+    @ResponseBody
+    public void resetPw(@RequestBody Map<String, String> resetParamas) {
+
+    }
 
 }

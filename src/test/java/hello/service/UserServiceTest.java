@@ -31,20 +31,20 @@ class UserServiceTest {
         // 调用userService
         // 验证userService将请求转发给了userMapper
         when(mockEncoder.encode("myPwd")).thenReturn("encodedPwd");
-        userService.save("myUser", "myPwd");
-        verify(mockMapper).save("myUser", "encodedPwd");
+        userService.save("myUser", "myPwd", "1@qq.com");
+        verify(mockMapper).save("myUser", "encodedPwd", "1@qq.com");
     }
 
     @Test
     public void testFindUserByUsername() {
         // 行为：调用userService中方法，然后验证mockMapper方法中接受到的参数是否一致
         userService.getUserByUsername("myUser");
-        verify(mockMapper).findUserByUsername("myUser");
+        verify(mockMapper).findUserByUsernameOrEmail("myUser");
     }
 
     @Test
     public void throwExceptionWhenUserNotFound() {
-        when(mockMapper.findUserByUsername("myUser")).thenReturn(null);
+        when(mockMapper.findUserByUsernameOrEmail("myUser")).thenReturn(null);
         // 上面这句话是多余的，实际上不配置都会默认返回null
 
         Assertions.assertThrows(UsernameNotFoundException.class,
@@ -55,7 +55,7 @@ class UserServiceTest {
 
     @Test
     public void returnUserDetailsWhenUserFound() {
-        when(mockMapper.findUserByUsername("myUser"))
+        when(mockMapper.findUserByUsernameOrEmail("myUser"))
                 .thenReturn(new User(1, "myUser", "encodedPwd"));
         UserDetails userDetails = userService.loadUserByUsername("myUser");
         Assertions.assertEquals("myUser", userDetails.getUsername());

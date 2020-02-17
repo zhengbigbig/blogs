@@ -22,7 +22,10 @@ public class User {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Instant updatedAt;
 
-    public User(Integer id,String username, String encryptedPassword) {
+    public User() {
+    }
+
+    public User(Integer id, String username, String encryptedPassword) {
         this.id = id;
         this.username = username;
         this.encryptedPassword = encryptedPassword;
@@ -31,7 +34,7 @@ public class User {
         this.updatedAt = Instant.now();
     }
 
-    public User(Integer id,String username, String encryptedPassword, String email) {
+    public User(Integer id, String username, String encryptedPassword, String email) {
         this.id = id;
         this.username = username;
         this.encryptedPassword = encryptedPassword;

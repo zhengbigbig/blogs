@@ -1,5 +1,7 @@
 package hello.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import java.time.Instant;
 
 /**
@@ -11,23 +13,25 @@ public class Mail {
     private String email;
     private Integer sms;
     private Integer usable;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Instant createdAt;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Instant deadLine;
 
-    public Mail( String email, Integer sms, Integer usable) {
+    // Mybatis框架会调用这个默认构造方法来构造实例对象，即实体类需要通过Mybatis进行动态反射生成。
+    public Mail() {
+    }
+
+    public Mail(String email, Integer sms) {
         this.email = email;
         this.sms = sms;
-        this.usable = usable;
+        this.usable = 1;
         this.createdAt = Instant.now();
-        this.deadLine  = Instant.now().plusSeconds(180);
+        this.deadLine = Instant.now().plusSeconds(180);
     }
 
     public Integer getId() {
         return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
     }
 
     public String getEmail() {

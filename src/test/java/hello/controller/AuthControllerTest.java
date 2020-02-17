@@ -101,8 +101,10 @@ class AuthControllerTest {
      */
     @Test
     void testRegister() throws Exception {
+        when(userService.getSmsByEmail("1@qq.com")).thenReturn(111111);
         ImmutableMap<String, String> usernamePwd = ImmutableMap.of(
-                "username", "用户名_a1", "password", "zA_.-a12"
+                "username", "用户名_a1", "password", "zA_.-a12",
+                "email", "1@qq.com", "sms", "111111"
         );
         ImmutableMap<String, String> errorUsername = ImmutableMap.of(
                 "username", "1", "password", "myPwd"
