@@ -57,6 +57,8 @@ public class AuthController {
     public LoginResult register(@RequestBody Map<String,String> registerUser) {
         String username = registerUser.get("username");
         String password = registerUser.get("password");
+        String sms = registerUser.get("sms");
+
         if (!USERNAME_STANDARD.matcher(username).find()) {
             return LoginResult.failure("invalid username");
         }

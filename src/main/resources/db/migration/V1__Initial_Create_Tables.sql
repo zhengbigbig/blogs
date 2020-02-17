@@ -18,11 +18,17 @@ create table user
 create table sms
 (
     id         bigint primary key auto_increment,
-    user_id    bigint not null,
     email       varchar(100) not null ,
     sms        int not null ,
     usable tinyint not null comment '是否有效，1-无效，2-有效',
-    send tinyint not null comment '是否已发送，1-未发送，2-已发送',
     created_at timestamp,
     dead_line  timestamp
 );
+
+#mysql 定时任务
+DROP event IF EXISTS e_delete_sms;
+CREATE EVENT e_delete_sms
+    ON SCHEDULE
+        EVERY 3 MINUTE
+    DO
+    DELETE FROM sms WHERE dead_line < current_timestamp;

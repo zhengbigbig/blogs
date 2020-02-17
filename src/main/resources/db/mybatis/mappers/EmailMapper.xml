@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="EmailMapper">
+    <select id="selectValidSms" parameterType="String" resultType="hello.entity.Mail">
+        select * from sms
+            where email = #{email} and usable = 1 and dead_line >= now()
+            order by id desc limit 0,1;
+    </select>
+
+    <insert id="insertSms" parameterType="hello.entity.Mail">
+        insert into sms (email, sms, usable, created_at, dead_line)
+        values (#{email},#{sms},#{usable},#{createdAt},#{deadLine});
+    </insert>
+
+    <update id="updateSms" parameterType="String">
+        UPDATE sms
+        SET usable = 2
+        WHERE email = #{email}
+    </update>
+</mapper>
