@@ -49,10 +49,10 @@ create table sys_role_user
     role_id bigint not null
 );
 insert into sys_role (name, level)
-values ('开发者', 1);
+values ('ROLE_ADMIN', 1);
 insert into sys_role (name, level)
-values ('管理员', 2);
+values ('ROLE_EXECUTOR', 2);
 insert into sys_role (name, level)
-values ('用户', 3);
+values ('ROLE_USER', 3);
 insert into sys_role_user (user_id, role_id)
 values (1, 1);

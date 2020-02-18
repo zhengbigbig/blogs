@@ -7,7 +7,9 @@ import hello.entity.*;
 import hello.entity.result.MailResult;
 import hello.entity.result.NormalResult;
 import hello.entity.result.Result;
+import hello.entity.user.Role;
 import hello.entity.user.User;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -15,10 +17,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 
 // 之前使用WebSecurityConfig中的UserDetailsService是Mock的，现在来实现
 @Service
@@ -40,12 +39,17 @@ public class UserService implements UserDetailsService {
     // 自定义UserDetailsService
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        if (getUserByUsernameOrEmail(username) == null) {
+        User user = getUserByUsernameOrEmail(username);
+        if (user == null) {
             throw new UsernameNotFoundException(username + "不存在！");
         }
-        User user = getUserByUsernameOrEmail(username);
+        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+        //用于添加用户的权限。只要把用户权限添加到authorities
+        for (Role role : user.getRoles()) {
+            authorities.add(new SimpleGrantedAuthority(role.getName()));
+        }
 
-        return new org.springframework.security.core.userdetails.User(username, user.getEncryptedPassword(), Collections.emptyList());
+        return new org.springframework.security.core.userdetails.User(username, user.getEncryptedPassword(), authorities);
     }
 
     public void save(String username, String password, String email) {
