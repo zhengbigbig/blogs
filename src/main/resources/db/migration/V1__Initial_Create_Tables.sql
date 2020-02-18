@@ -35,12 +35,11 @@ CREATE EVENT e_delete_sms
     FROM sms
     WHERE dead_line < current_timestamp;
 
-# 权限
+# 角色
 create table sys_role
 (
-    id    bigint primary key auto_increment,
-    name  varchar(100) not null,
-    level tinyint      not null
+    id   bigint primary key auto_increment,
+    name varchar(100) not null
 );
 create table sys_role_user
 (
@@ -48,11 +47,27 @@ create table sys_role_user
     user_id bigint not null,
     role_id bigint not null
 );
-insert into sys_role (name, level)
-values ('ROLE_ADMIN', 1);
-insert into sys_role (name, level)
-values ('ROLE_EXECUTOR', 2);
-insert into sys_role (name, level)
-values ('ROLE_USER', 3);
+insert into sys_role (name)
+values ('ROLE_ADMIN');
+insert into sys_role (name)
+values ('ROLE_EXECUTOR');
+insert into sys_role (name)
+values ('ROLE_USER');
 insert into sys_role_user (user_id, role_id)
 values (1, 1);
+
+#权限
+create table sys_permission_role
+(
+    id            bigint primary key auto_increment,
+    role_id       bigint not null,
+    permission_id bigint not null
+);
+create table sys_permission
+(
+    id          bigint primary key auto_increment,
+    name        varchar(100) not null,
+    description varchar(100) not null,
+    url         varchar(100) not null,
+    pid         int
+);

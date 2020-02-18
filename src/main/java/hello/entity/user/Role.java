@@ -3,7 +3,6 @@ package hello.entity.user;
 public class Role {
     private Integer id;
     private String name;
-    private Integer level;
 
     public Integer getId() {
         return id;
@@ -19,13 +18,5 @@ public class Role {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public Integer getLevel() {
-        return level;
-    }
-
-    public void setLevel(Integer level) {
-        this.level = level;
     }
 }

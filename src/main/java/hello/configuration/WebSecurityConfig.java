@@ -26,8 +26,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 // 授权请求，通配符匹配路径，允许匹配的所有
                 .authorizeRequests()
                 .antMatchers("/", "/auth/**").permitAll()
-                .antMatchers("/xxx").authenticated()
-                .anyRequest().permitAll();
+                .anyRequest().authenticated()
+                .and()
+                .logout().permitAll();
     }
 
     // 鉴权
