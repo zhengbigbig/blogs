@@ -2,9 +2,9 @@ package hello.service;
 
 import hello.dao.BlogDao;
 import hello.entity.Blog;
-import hello.entity.BlogListResult;
-import hello.entity.BlogResult;
-import hello.entity.User;
+import hello.entity.result.BlogListResult;
+import hello.entity.result.BlogResult;
+import hello.entity.user.User;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;

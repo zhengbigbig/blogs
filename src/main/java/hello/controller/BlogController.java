@@ -1,10 +1,10 @@
 package hello.controller;
 
 import hello.entity.Blog;
-import hello.entity.BlogListResult;
-import hello.entity.BlogResult;
-import hello.entity.Result;
-import hello.entity.User;
+import hello.entity.result.BlogListResult;
+import hello.entity.result.BlogResult;
+import hello.entity.result.Result;
+import hello.entity.user.User;
 import hello.service.AuthService;
 import hello.service.BlogService;
 import hello.utils.AssertUtils;

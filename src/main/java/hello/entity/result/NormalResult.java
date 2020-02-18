@@ -1,4 +1,4 @@
-package hello.entity;
+package hello.entity.result;
 
 public class NormalResult extends Result {
     protected NormalResult(ResultStatus status, String msg, Object data) {

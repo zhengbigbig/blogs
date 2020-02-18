@@ -2,7 +2,7 @@ package hello.service;
 
 import com.google.common.collect.ImmutableMap;
 import hello.dao.UserDao;
-import hello.entity.User;
+import hello.entity.user.User;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

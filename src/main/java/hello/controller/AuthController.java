@@ -1,9 +1,9 @@
 package hello.controller;
 
-import hello.entity.LoginResult;
-import hello.entity.NormalResult;
-import hello.entity.Result;
-import hello.entity.User;
+import hello.entity.result.LoginResult;
+import hello.entity.result.NormalResult;
+import hello.entity.result.Result;
+import hello.entity.user.User;
 import hello.service.AuthService;
 import hello.service.UserService;
 import hello.utils.ValidateUtils;
@@ -59,7 +59,9 @@ public class AuthController {
         String sms = registerUser.get("sms");
 
         LoginResult illegalResult = validateRegisterIfIllegal(username, password, email, sms);
-        if (illegalResult != null) return illegalResult;
+        if (illegalResult != null) {
+            return illegalResult;
+        }
 
         // 本来未考虑到并发同时注册相同用户
         // 现在使用数据库username字段改为unique则直接保存捕获异常然后抛出错误
@@ -75,11 +77,11 @@ public class AuthController {
     }
 
     private LoginResult validateRegisterIfIllegal(String username, String password, String email, String sms) {
-        if(userService.isUserExist(username)){
+        if (userService.isUserExist(username)) {
             return LoginResult.failure("exist username");
         }
 
-        if(userService.isUserExist(email)){
+        if (userService.isUserExist(email)) {
             return LoginResult.failure("exist email");
         }
 

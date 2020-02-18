@@ -1,6 +1,6 @@
 package hello.controller;
 
-import hello.entity.User;
+import hello.entity.user.User;
 import hello.service.AuthService;
 import hello.service.BlogService;
 import org.junit.jupiter.api.Assertions;

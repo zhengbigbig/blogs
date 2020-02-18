@@ -1,4 +1,6 @@
-package hello.entity;
+package hello.entity.result;
+
+import hello.entity.user.User;
 
 public class LoginResult extends Result<User> {
     boolean isLogin;

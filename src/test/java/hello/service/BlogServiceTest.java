@@ -2,10 +2,10 @@ package hello.service;
 
 import hello.dao.BlogDao;
 import hello.entity.Blog;
-import hello.entity.BlogListResult;
-import hello.entity.BlogResult;
-import hello.entity.Result;
-import hello.entity.User;
+import hello.entity.result.BlogListResult;
+import hello.entity.result.BlogResult;
+import hello.entity.result.Result;
+import hello.entity.user.User;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

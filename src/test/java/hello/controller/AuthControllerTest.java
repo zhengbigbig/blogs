@@ -80,7 +80,7 @@ class AuthControllerTest {
         ImmutableMap<String, String> usernamePwd = ImmutableMap.of("username", "myUser", "password", "myPwd");
         // 避免空指针异常，使用mock的值
         when(userService.loadUserByUsername("myUser")).thenReturn(new User("myUser", bCryptPasswordEncoder.encode("myPwd"), Collections.emptyList()));
-        when(userService.getUserByUsernameOrEmail("myUser")).thenReturn(new hello.entity.User(1, "myUser", bCryptPasswordEncoder.encode("myPwd")));
+        when(userService.getUserByUsernameOrEmail("myUser")).thenReturn(new hello.entity.user.User(1, "myUser", bCryptPasswordEncoder.encode("myPwd")));
 
         String s = new ObjectMapper().writeValueAsString(usernamePwd); // json
         MvcResult response = mvc.perform(post("/auth/login")

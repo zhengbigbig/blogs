@@ -1,4 +1,6 @@
-package hello.entity;
+package hello.entity.result;
+
+import hello.entity.Blog;
 
 import java.util.List;
 

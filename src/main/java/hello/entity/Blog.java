@@ -1,5 +1,7 @@
 package hello.entity;
 
+import hello.entity.user.User;
+
 import java.time.Instant;
 
 public class Blog {

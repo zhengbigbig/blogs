@@ -1,4 +1,4 @@
-package hello.entity;
+package hello.entity.result;
 
 public abstract class Result<T> {
     public enum ResultStatus {

@@ -78,7 +78,7 @@
         <result property="content" column="blog_content"/>
         <result property="updatedAt" column="blog_updated_at"/>
         <result property="createdAt" column="blog_created_at"/>
-        <association property="user" javaType="hello.entity.User">
+        <association property="user" javaType="hello.entity.user.User">
             <id property="id" column="user_id"/>
             <result property="username" column="user_username"/>
             <result property="avatar" column="user_avatar"/>

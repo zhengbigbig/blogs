@@ -1,4 +1,6 @@
-package hello.entity;
+package hello.entity.result;
+
+import hello.entity.Mail;
 
 public class MailResult extends Result<Object> {
     protected MailResult(ResultStatus status, String msg, Object data) {

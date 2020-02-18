@@ -4,6 +4,10 @@ import com.google.common.collect.ImmutableMap;
 import hello.dao.MailDao;
 import hello.dao.UserDao;
 import hello.entity.*;
+import hello.entity.result.MailResult;
+import hello.entity.result.NormalResult;
+import hello.entity.result.Result;
+import hello.entity.user.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -64,7 +68,7 @@ public class UserService implements UserDetailsService {
         return userDao.updateUser(user);
     }
 
-    public boolean isUserExist(String searchName){
+    public boolean isUserExist(String searchName) {
         return Optional.ofNullable(getUserByUsernameOrEmail(searchName))
                 .map(user -> true).orElse(false);
     }

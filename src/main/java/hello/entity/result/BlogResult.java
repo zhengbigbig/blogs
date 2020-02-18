@@ -1,4 +1,6 @@
-package hello.entity;
+package hello.entity.result;
+
+import hello.entity.Blog;
 
 public class BlogResult extends Result<Blog> {
     protected BlogResult(ResultStatus status, String msg, Blog data) {

@@ -3,9 +3,11 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="UserMapper">
-    <select id="getUserByUsernameOrEmail" parameterType="string" resultType="hello.entity.User">
-        select * from user
-        where username = #{username} or email = #{username}
+    <select id="getUserByUsernameOrEmail" parameterType="string" resultMap="userMap">
+        select u.*,sr.id as role_id, sr.name as name,sr.level as level from user u
+        left join sys_role_user sru on u.id = sru.user_id
+        left join sys_role sr on sr.id = sru.role_id
+        where username = #{username} or email = #{username} and state = 1;
     </select>
 
     <insert id="insertUser" parameterType="Map">
@@ -13,7 +15,7 @@
         values (#{username},#{password},#{email},current_timestamp ,current_timestamp);
     </insert>
 
-    <update id="updateUser" parameterType="hello.entity.User">
+    <update id="updateUser" parameterType="hello.entity.user.User">
         update user
         <set>
             <if test="username != null">`username` = #{username}, </if>
@@ -29,4 +31,24 @@
         </set>
         where id = #{id}
     </update>
+
+    <resultMap id="userMap" type="hello.entity.user.User">
+        <id property="id" column="id"/>
+        <result property="username" column="username"/>
+        <result property="encryptedPassword" column="encrypted_password"/>
+        <result property="avatar" column="avatar"/>
+        <result property="email" column="email"/>
+        <result property="sex" column="sex"/>
+        <result property="summary" column="summary"/>
+        <result property="profession" column="profession"/>
+        <result property="address" column="address"/>
+        <result property="technologyStack" column="technology_stack"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <collection property="roles" ofType="hello.entity.user.Role">
+            <result property="id" column="role_id"/>
+            <result property="name" column="name"/>
+            <result property="level" column="level"/>
+        </collection>
+    </resultMap>
 </mapper>

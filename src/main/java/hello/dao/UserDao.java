@@ -1,6 +1,6 @@
 package hello.dao;
 
-import hello.entity.User;
+import hello.entity.user.User;
 import org.apache.ibatis.session.SqlSession;
 import org.springframework.stereotype.Service;
 
