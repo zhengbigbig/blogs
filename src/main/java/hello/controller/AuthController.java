@@ -58,16 +58,8 @@ public class AuthController {
         String email = registerUser.get("email");
         String sms = registerUser.get("sms");
 
-        if (!ValidateUtils.username(username)) {
-            return LoginResult.failure("invalid username");
-        }
-        if (!ValidateUtils.password(password)) {
-            return LoginResult.failure("invalid password");
-        }
-
-        if (!userService.isEqualSms(email, Integer.parseInt(sms))) {
-            return LoginResult.failure("invalid sms");
-        }
+        LoginResult illegalResult = validateRegisterIfIllegal(username, password, email, sms);
+        if (illegalResult != null) return illegalResult;
 
         // 本来未考虑到并发同时注册相同用户
         // 现在使用数据库username字段改为unique则直接保存捕获异常然后抛出错误
@@ -80,6 +72,28 @@ public class AuthController {
             e.printStackTrace();
             return LoginResult.failure("用户已存在");
         }
+    }
+
+    private LoginResult validateRegisterIfIllegal(String username, String password, String email, String sms) {
+        if(userService.isUserExist(username)){
+            return LoginResult.failure("exist username");
+        }
+
+        if(userService.isUserExist(email)){
+            return LoginResult.failure("exist email");
+        }
+
+        if (!ValidateUtils.username(username)) {
+            return LoginResult.failure("invalid username");
+        }
+        if (!ValidateUtils.password(password)) {
+            return LoginResult.failure("invalid password");
+        }
+
+        if (!userService.isEqualSms(email, Integer.parseInt(sms))) {
+            return LoginResult.failure("invalid sms");
+        }
+        return null;
     }
 
     @PostMapping("/auth/login")

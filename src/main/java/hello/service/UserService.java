@@ -64,6 +64,11 @@ public class UserService implements UserDetailsService {
         return userDao.updateUser(user);
     }
 
+    public boolean isUserExist(String searchName){
+        return Optional.ofNullable(getUserByUsernameOrEmail(searchName))
+                .map(user -> true).orElse(false);
+    }
+
     // 生成6位验证码并发送邮件，发送后存入数据库
     public Result<Object> sendMailIfSuccessThenSaveSms(Map<String, String> registerUser) {
         String email = registerUser.get("email");
