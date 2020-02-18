@@ -2,11 +2,13 @@ package hello.service;
 
 import com.google.common.collect.ImmutableMap;
 import hello.dao.MailDao;
+import hello.dao.PermissionMapper;
 import hello.dao.UserDao;
 import hello.entity.*;
 import hello.entity.result.MailResult;
 import hello.entity.result.NormalResult;
 import hello.entity.result.Result;
+import hello.entity.user.Permission;
 import hello.entity.user.Role;
 import hello.entity.user.User;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -27,13 +29,15 @@ public class UserService implements UserDetailsService {
     private UserDao userDao;
     private MailDao mailDao;
     private MailService mailService;
+    private PermissionMapper permissionMapper;
 
     @Inject
-    public UserService(BCryptPasswordEncoder bCryptPasswordEncoder, UserDao userDao, MailDao mailDao, MailService mailService) {
+    public UserService(BCryptPasswordEncoder bCryptPasswordEncoder, UserDao userDao, MailDao mailDao, MailService mailService, PermissionMapper permissionMapper) {
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
         this.userDao = userDao;
         this.mailDao = mailDao;
         this.mailService = mailService;
+        this.permissionMapper = permissionMapper;
     }
 
     // 自定义UserDetailsService
@@ -43,10 +47,11 @@ public class UserService implements UserDetailsService {
         if (user == null) {
             throw new UsernameNotFoundException(username + "不存在！");
         }
+        List<Permission> permissions = permissionMapper.findPermissionByUserId(user.getId());
         List<SimpleGrantedAuthority> authorities = new ArrayList<>();
-        //用于添加用户的权限。只要把用户权限添加到authorities
-        for (Role role : user.getRoles()) {
-            authorities.add(new SimpleGrantedAuthority(role.getName()));
+        // 将权限信息添加到SimpleGrantedAuthority中，之后进行全权限验证会使用该SimpleGrantedAuthority
+        for (Permission permission : permissions) {
+            authorities.add(new SimpleGrantedAuthority(permission.getName()));
         }
 
         return new org.springframework.security.core.userdetails.User(username, user.getEncryptedPassword(), authorities);
