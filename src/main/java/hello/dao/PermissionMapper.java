@@ -12,11 +12,11 @@ public interface PermissionMapper {
     @Select("select * from sys_permission")
     List<Permission> findAllPermission();
 
-    @Select("select p.* from user u\n" +
+    @Select("select sp.* from user u\n" +
             "    LEFT JOIN sys_role_user sru on u.id = sru.user_id\n" +
             "    LEFT JOIN sys_role sr on sru.role_id = sr.id\n" +
             "    LEFT JOIN sys_permission_role spr on sru.role_id = spr.role_id\n" +
-            "    LEFT JOIN sys_permission sp on spr.permission_id = sp.id\n" +
+            "    RIGHT JOIN sys_permission sp on spr.permission_id = sp.id\n" +
             "where u.id = #{userId}")
     List<Permission> findPermissionByUserId(@Param("userId") Integer userId);
 }

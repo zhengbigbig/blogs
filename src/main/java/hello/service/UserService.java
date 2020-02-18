@@ -4,12 +4,11 @@ import com.google.common.collect.ImmutableMap;
 import hello.dao.MailDao;
 import hello.dao.PermissionMapper;
 import hello.dao.UserDao;
-import hello.entity.*;
+import hello.entity.Mail;
 import hello.entity.result.MailResult;
 import hello.entity.result.NormalResult;
 import hello.entity.result.Result;
 import hello.entity.user.Permission;
-import hello.entity.user.Role;
 import hello.entity.user.User;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -47,13 +46,12 @@ public class UserService implements UserDetailsService {
         if (user == null) {
             throw new UsernameNotFoundException(username + "不存在！");
         }
-        List<Permission> permissions = permissionMapper.findPermissionByUserId(user.getId());
+        List<Permission> permissions = Optional.ofNullable(permissionMapper.findPermissionByUserId(user.getId())).orElse(new ArrayList<>());
         List<SimpleGrantedAuthority> authorities = new ArrayList<>();
         // 将权限信息添加到SimpleGrantedAuthority中，之后进行全权限验证会使用该SimpleGrantedAuthority
         for (Permission permission : permissions) {
             authorities.add(new SimpleGrantedAuthority(permission.getName()));
         }
-
         return new org.springframework.security.core.userdetails.User(username, user.getEncryptedPassword(), authorities);
     }
 

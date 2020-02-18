@@ -7,6 +7,7 @@ import hello.entity.user.User;
 import hello.service.AuthService;
 import hello.service.UserService;
 import hello.utils.ValidateUtils;
+import lombok.extern.java.Log;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -22,6 +23,7 @@ import java.util.Map;
 import java.util.Optional;
 
 // Filter->构造Token->AuthenticationManager->转给Provider处理->认证处理成功后续操作或者不通过抛异常
+@Log
 @RestController
 public class AuthController {
     private final UserService userService;
@@ -168,6 +170,12 @@ public class AuthController {
         } else {
             return NormalResult.failure("修改失败");
         }
+    }
+
+    @GetMapping("/xxx")
+    public String test(){
+        log.info("test 成功");
+        return "xxx";
     }
 
 }

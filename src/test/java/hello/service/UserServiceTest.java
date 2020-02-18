@@ -1,8 +1,8 @@
 package hello.service;
 
 import com.google.common.collect.ImmutableMap;
+import hello.dao.PermissionMapper;
 import hello.dao.UserDao;
-import hello.entity.user.Role;
 import hello.entity.user.User;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -14,9 +14,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -27,8 +24,11 @@ class UserServiceTest {
     BCryptPasswordEncoder mockEncoder;
     @Mock
     UserDao userDao;
+    @Mock
+    PermissionMapper permissionMapper;
     @InjectMocks
     UserService userService;
+
 
     @Test
     void testSave() {
@@ -60,11 +60,9 @@ class UserServiceTest {
     @Test
     public void returnUserDetailsWhenUserFound() {
         User user = new User(1, "myUser", "encodedPwd");
-        Role role = new Role();
-        role.setName("ROLE_ADMIN");
-        user.setRoles(new ArrayList<>(Arrays.asList(role)));
         when(userDao.findUserByUsernameOrEmail("myUser"))
                 .thenReturn(user);
+        when(permissionMapper.findPermissionByUserId(1)).thenReturn(null);
         UserDetails userDetails = userService.loadUserByUsername("myUser");
         Assertions.assertEquals("myUser", userDetails.getUsername());
         Assertions.assertEquals("encodedPwd", userDetails.getPassword());
