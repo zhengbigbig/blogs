@@ -144,7 +144,7 @@ public class AuthController {
         SecurityContextHolder.clearContext();
         return authService.getCurrentUser()
                 .map(user -> LoginResult.success("注销成功", false))
-                .orElse(LoginResult.failure("注销成功！"));
+                .orElse(LoginResult.failure("未登录！"));
     }
 
     @PostMapping("/auth/resetPw")
@@ -173,7 +173,8 @@ public class AuthController {
     }
 
     @GetMapping("/xxx")
-    public String test(){
+    @ResponseBody
+    public String test() {
         log.info("test 成功");
         return "xxx";
     }

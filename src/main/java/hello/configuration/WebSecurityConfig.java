@@ -1,6 +1,8 @@
 package hello.configuration;
 
 import hello.configuration.interceptor.MyFilterSecurityInterceptor;
+import hello.configuration.unauthenticate.SimpleAccessDeniedHandler;
+import hello.configuration.unauthenticate.SimpleAuthenticationEntryPoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -38,15 +40,20 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http.csrf().disable(); // 默认是开启的，会导致访问403，需要先关闭，一种跨站请求伪造，对post有效
+        // csrf默认是开启的，会导致访问403，需要先关闭，一种跨站请求伪造，对post有效
         http
                 // 授权请求，通配符匹配路径，允许匹配的所有
                 .authorizeRequests()
                 .antMatchers("/", "/auth/**").permitAll()
                 .anyRequest().authenticated()
                 .and()
+                .exceptionHandling()
+                .accessDeniedHandler(new SimpleAccessDeniedHandler()).authenticationEntryPoint(new SimpleAuthenticationEntryPoint())
+                .and()
                 .logout().permitAll();
-        http.addFilterBefore(myFilterSecurityInterceptor, FilterSecurityInterceptor.class);
+        http.addFilterBefore(myFilterSecurityInterceptor, FilterSecurityInterceptor.class)
+                .csrf().disable();
+
     }
 
     // 鉴权

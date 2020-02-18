@@ -65,4 +65,14 @@ public class MyFilterSecurityInterceptor extends AbstractSecurityInterceptor imp
     public SecurityMetadataSource obtainSecurityMetadataSource() {
         return this.securityMetadataSource;
     }
+
+    @Override
+    public void init(FilterConfig filterConfig) throws ServletException {
+
+    }
+
+    @Override
+    public void destroy() {
+
+    }
 }
