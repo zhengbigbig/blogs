@@ -1,9 +1,11 @@
 package hello.entity.result;
 
 import hello.entity.Blog;
+import lombok.Getter;
 
 import java.util.List;
 
+@Getter
 public class BlogListResult extends Result<List<Blog>> {
     private int total;
     private int page;
@@ -22,17 +24,5 @@ public class BlogListResult extends Result<List<Blog>> {
         this.total = total;
         this.page = page;
         this.totalPage = totalPage;
-    }
-
-    public int getTotal() {
-        return total;
-    }
-
-    public int getPage() {
-        return page;
-    }
-
-    public int getTotalPage() {
-        return totalPage;
     }
 }

@@ -1,6 +1,8 @@
 package hello.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.Instant;
 
@@ -8,6 +10,8 @@ import java.time.Instant;
  * usable 是否有效，1-无效，2-有效,
  */
 
+@Getter
+@Setter
 public class Mail {
     @JsonIgnore
     private Integer id;
@@ -30,49 +34,5 @@ public class Mail {
         this.usable = 1;
         this.createdAt = Instant.now();
         this.deadLine = Instant.now().plusSeconds(180);
-    }
-
-    public Integer getId() {
-        return id;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public Integer getSms() {
-        return sms;
-    }
-
-    public void setSms(Integer sms) {
-        this.sms = sms;
-    }
-
-    public Integer getUsable() {
-        return usable;
-    }
-
-    public void setUsable(Integer usable) {
-        this.usable = usable;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Instant getDeadLine() {
-        return deadLine;
-    }
-
-    public void setDeadLine(Instant deadLine) {
-        this.deadLine = deadLine;
     }
 }
