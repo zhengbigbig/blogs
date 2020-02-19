@@ -1,5 +1,6 @@
 package hello.configuration.interceptor;
 
+import lombok.extern.java.Log;
 import org.springframework.security.access.AccessDecisionManager;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.ConfigAttribute;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.util.Collection;
 import java.util.Iterator;
 
+@Log
 @Service
 public class MyAccessDecisionManager implements AccessDecisionManager {
 
@@ -22,26 +24,27 @@ public class MyAccessDecisionManager implements AccessDecisionManager {
      * @param configAttributes 为MyInvocationSecurityMetadataSource的getAttributes(Object object)返回的结果
      *                         判断用户请求的url是否在权限表，不在则放行，在则返回给decide方法来判断是否拥有权限
      * @throws AccessDeniedException
-     * @throws InsufficientAuthenticationException
+     * @throws InsufficientAuthenticationException 必须在登录后才能正常决策
      */
     @Override
     public void decide(Authentication authentication, Object object, Collection<ConfigAttribute> configAttributes) throws AccessDeniedException, InsufficientAuthenticationException {
-        if (null == configAttributes || configAttributes.size() <= 0) {
-            return;
-        } else {
-            String needRole;
-            for (Iterator<ConfigAttribute> iter = configAttributes.iterator(); iter.hasNext(); ) {
-                needRole = iter.next().getAttribute();
-
-                for (GrantedAuthority ga : authentication.getAuthorities()) {
-                    if (needRole.trim().equals(ga.getAuthority().trim())) {
-                        return;
-                    }
+        Iterator<ConfigAttribute> iterator = configAttributes.iterator();
+        while (iterator.hasNext()) {
+            ConfigAttribute ca = iterator.next();
+            //当前请求需要无权限url
+            String needRole = ca.getAttribute();
+            if ("NO_NEED_RIGHT".equals(needRole)) {
+                return;
+            }
+            //当前用户所具有的权限
+            Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+            for (GrantedAuthority authority : authorities) {
+                if (authority.getAuthority().equals(needRole)) {
+                    return;
                 }
             }
-            throw new AccessDeniedException("no access");
         }
-
+        throw new AccessDeniedException("权限不足!");
     }
 
     /**

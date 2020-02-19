@@ -50,4 +50,14 @@ public class User {
         this.createdAt = Instant.now();
         this.updatedAt = Instant.now();
     }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj);
+    }
 }

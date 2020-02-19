@@ -23,6 +23,7 @@ import java.io.IOException;
 
 
  */
+
 @Service
 public class MyFilterSecurityInterceptor extends AbstractSecurityInterceptor implements Filter {
     private FilterInvocationSecurityMetadataSource securityMetadataSource;
@@ -52,6 +53,7 @@ public class MyFilterSecurityInterceptor extends AbstractSecurityInterceptor imp
         } finally {
             super.afterInvocation(token, null);
         }
+
     }
 
     // 定义Object类型

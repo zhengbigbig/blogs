@@ -11,6 +11,7 @@ import hello.entity.result.Result;
 import hello.entity.user.Permission;
 import hello.entity.user.User;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -29,6 +30,9 @@ public class UserService implements UserDetailsService {
     private MailDao mailDao;
     private MailService mailService;
     private PermissionMapper permissionMapper;
+
+    @Inject
+    private SessionRegistry sessionRegistry;
 
     @Inject
     public UserService(BCryptPasswordEncoder bCryptPasswordEncoder, UserDao userDao, MailDao mailDao, MailService mailService, PermissionMapper permissionMapper) {
@@ -52,7 +56,10 @@ public class UserService implements UserDetailsService {
         for (Permission permission : permissions) {
             authorities.add(new SimpleGrantedAuthority(permission.getName()));
         }
-        return new org.springframework.security.core.userdetails.User(username, user.getEncryptedPassword(), authorities);
+
+        org.springframework.security.core.userdetails.User logedUser = new org.springframework.security.core.userdetails.User(username, user.getEncryptedPassword(), authorities);
+//        sessionRegistry.registerNewSession();
+        return logedUser;
     }
 
     public void save(String username, String password, String email) {

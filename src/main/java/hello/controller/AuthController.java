@@ -1,5 +1,6 @@
 package hello.controller;
 
+import com.alibaba.fastjson.JSONObject;
 import hello.entity.result.LoginResult;
 import hello.entity.result.NormalResult;
 import hello.entity.result.Result;
@@ -12,13 +13,17 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.session.SessionInformation;
+import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -29,6 +34,8 @@ public class AuthController {
     private final UserService userService;
     private final AuthenticationManager authenticationManager;
     private final AuthService authService;
+    @Inject
+    private SessionRegistry sessionRegistry;
 
     @Inject
     public AuthController(UserService userService, AuthenticationManager authenticationManager, AuthService authService) {
@@ -174,8 +181,9 @@ public class AuthController {
 
     @GetMapping("/xxx")
     @ResponseBody
-    public String test() {
-        log.info("test 成功");
+    public String sessions(Authentication authentication) {
+        List<SessionInformation> list = sessionRegistry.getAllSessions(authentication.getPrincipal(), false);
+        log.info(JSONObject.toJSONString(list));
         return "xxx";
     }
 

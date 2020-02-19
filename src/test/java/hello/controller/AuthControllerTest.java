@@ -15,6 +15,7 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -41,6 +42,8 @@ class AuthControllerTest {
     @Mock
     private UserService userService;
     @Mock
+    private SessionRegistry sessionRegistry;
+    @Mock
     private AuthenticationManager authenticationManager;
     @Mock
     private SecurityContext context;
@@ -50,7 +53,7 @@ class AuthControllerTest {
     // 对每个测试构建
     @BeforeEach
     void setUp() {
-        AuthService authService = new AuthService(userService);
+        AuthService authService = new AuthService(userService, sessionRegistry);
         mvc = MockMvcBuilders.standaloneSetup(new AuthController(userService, authenticationManager, authService)).build();
     }
 

@@ -12,6 +12,9 @@ public interface PermissionMapper {
     @Select("select * from sys_permission")
     List<Permission> findAllPermission();
 
+    @Select("select * from sys_permission where url = #{url}")
+    List<Permission> findPermissionsByUrl(@Param("url") String url);
+
     @Select("select sp.* from user u\n" +
             "    LEFT JOIN sys_role_user sru on u.id = sru.user_id\n" +
             "    LEFT JOIN sys_role sr on sru.role_id = sr.id\n" +
