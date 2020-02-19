@@ -2,6 +2,7 @@ package hello.configuration;
 
 import hello.configuration.interceptor.MyFilterSecurityInterceptor;
 import hello.configuration.session.AjaxSessionInformationExpiredStrategy;
+import hello.configuration.session.MyValidCodeProcessingFilter;
 import hello.configuration.unauthenticate.SimpleAccessDeniedHandler;
 import hello.configuration.unauthenticate.SimpleAuthenticationEntryPoint;
 import org.springframework.context.annotation.Bean;
@@ -17,6 +18,7 @@ import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
 
 import javax.inject.Inject;
@@ -44,6 +46,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     private MyFilterSecurityInterceptor myFilterSecurityInterceptor;
     @Inject
     private AjaxSessionInformationExpiredStrategy ajaxSessionInformationExpiredStrategy;
+    @Inject
+    SessionRegistry sessionRegistry;
+    @Inject
+    private BCryptPasswordEncoder bCryptPasswordEncoder;
 
     //    @Inject
 //    private DataSource dataSource;
@@ -64,30 +70,25 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 // 授权请求，通配符匹配路径，允许匹配的所有
                 .authorizeRequests()
                 .antMatchers("/", "/auth/**").permitAll()
-                .anyRequest().authenticated()
 
-                .and()
+                .anyRequest().authenticated().and()
                 .exceptionHandling()
                 .accessDeniedHandler(new SimpleAccessDeniedHandler()).authenticationEntryPoint(new SimpleAuthenticationEntryPoint())
-
                 .and()
+                .addFilterBefore(new MyValidCodeProcessingFilter(sessionRegistry, bCryptPasswordEncoder), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(myFilterSecurityInterceptor, FilterSecurityInterceptor.class)
+                .csrf().disable()
                 .logout()
                 .invalidateHttpSession(true)
                 .clearAuthentication(true)
                 .permitAll()
 
                 .and()
-                .rememberMe().tokenValiditySeconds(1209600).key("mykey")
-                .and()
                 .sessionManagement()
                 .maximumSessions(1) // 只能一个地方登陆
                 .maxSessionsPreventsLogin(false) // 阻止其他地方登陆
                 .expiredSessionStrategy(ajaxSessionInformationExpiredStrategy) // session失效后的返回
-                .sessionRegistry(sessionRegistry());
-
-        http.addFilterBefore(myFilterSecurityInterceptor, FilterSecurityInterceptor.class).csrf().disable()
-                .csrf().disable();
-
+                .sessionRegistry(sessionRegistry);
     }
 
     //    // 鉴权
@@ -115,7 +116,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     // 自定义session
     @Bean
-    public SessionRegistry sessionRegistry() {
+    public SessionRegistry getSessionRegistry() {
         return new SessionRegistryImpl();
     }
 

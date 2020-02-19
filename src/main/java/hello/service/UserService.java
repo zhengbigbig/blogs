@@ -10,6 +10,7 @@ import hello.entity.result.NormalResult;
 import hello.entity.result.Result;
 import hello.entity.user.Permission;
 import hello.entity.user.User;
+import lombok.extern.java.Log;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -22,6 +23,7 @@ import javax.inject.Inject;
 import java.util.*;
 
 // 之前使用WebSecurityConfig中的UserDetailsService是Mock的，现在来实现
+@Log
 @Service
 public class UserService implements UserDetailsService {
 
@@ -56,10 +58,9 @@ public class UserService implements UserDetailsService {
         for (Permission permission : permissions) {
             authorities.add(new SimpleGrantedAuthority(permission.getName()));
         }
-
-        org.springframework.security.core.userdetails.User logedUser = new org.springframework.security.core.userdetails.User(username, user.getEncryptedPassword(), authorities);
-//        sessionRegistry.registerNewSession();
-        return logedUser;
+        log.info("loadUserByUsername" + user);
+        user.setAuthorities(authorities); //用于登录时 @AuthenticationPrincipal 标签取值
+        return user;
     }
 
     public void save(String username, String password, String email) {

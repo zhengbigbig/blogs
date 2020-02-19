@@ -27,17 +27,17 @@ public class AuthService {
         return Optional.ofNullable(userService.getUserByUsernameOrEmail(authentication == null ? null : authentication.getName()));
     }
 
-    private void invalidateSession(User user){
-        List<Object> o= sessionRegistry.getAllPrincipals();
-        for (Object principal : o) {
-            if (principal instanceof User) {
-                final User loggedUser = (User) principal;
-                if (user.getUsername().equals(loggedUser.getUsername())) {
-                    List<SessionInformation> sessionsInfo = sessionRegistry.getAllSessions(principal, false);
-                    if (null != sessionsInfo && sessionsInfo.size() > 0) {
-                        for (SessionInformation sessionInformation : sessionsInfo) {
-                            sessionInformation.expireNow();
-                        }
+    private void invalidateSession(String username) {
+        List<Object> allPrincipals = sessionRegistry.getAllPrincipals();
+        for (int j = 0; j < allPrincipals.size(); j++) {
+            User customUser = (User) allPrincipals.get(j);
+            if (customUser.getUsername().equals(username)) {
+                List<SessionInformation> allSessions = sessionRegistry.getAllSessions(customUser, false);
+                if (allSessions != null) {
+                    for (int i = 0; i < allSessions.size(); i++) {
+                        SessionInformation sessionInformation = allSessions.get(i);
+                        sessionInformation.expireNow();
+                        sessionRegistry.removeSessionInformation(sessionInformation.getSessionId());
                     }
                 }
             }

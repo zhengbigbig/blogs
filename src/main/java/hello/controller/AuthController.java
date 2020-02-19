@@ -13,9 +13,8 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.session.SessionInformation;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -34,14 +33,14 @@ public class AuthController {
     private final UserService userService;
     private final AuthenticationManager authenticationManager;
     private final AuthService authService;
-    @Inject
-    private SessionRegistry sessionRegistry;
+    private final SessionRegistry sessionRegistry;
 
     @Inject
-    public AuthController(UserService userService, AuthenticationManager authenticationManager, AuthService authService) {
+    public AuthController(UserService userService, AuthenticationManager authenticationManager, AuthService authService, SessionRegistry sessionRegistry) {
         this.userService = userService;
         this.authenticationManager = authenticationManager;
         this.authService = authService;
+        this.sessionRegistry = sessionRegistry;
     }
 
     @GetMapping("/auth")
@@ -181,9 +180,10 @@ public class AuthController {
 
     @GetMapping("/xxx")
     @ResponseBody
-    public String sessions(Authentication authentication) {
-        List<SessionInformation> list = sessionRegistry.getAllSessions(authentication.getPrincipal(), false);
-        log.info(JSONObject.toJSONString(list));
+    public String sessions(@AuthenticationPrincipal User loginedUser) {
+        System.out.println(loginedUser);
+        List<Object> users = sessionRegistry.getAllPrincipals();
+        log.info(JSONObject.toJSONString(users));
         return "xxx";
     }
 

@@ -54,7 +54,7 @@ class AuthControllerTest {
     @BeforeEach
     void setUp() {
         AuthService authService = new AuthService(userService, sessionRegistry);
-        mvc = MockMvcBuilders.standaloneSetup(new AuthController(userService, authenticationManager, authService)).build();
+        mvc = MockMvcBuilders.standaloneSetup(new AuthController(userService, authenticationManager, authService, sessionRegistry)).build();
     }
 
     //
