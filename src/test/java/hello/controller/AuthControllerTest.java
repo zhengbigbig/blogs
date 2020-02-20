@@ -53,14 +53,14 @@ class AuthControllerTest {
     // 对每个测试构建
     @BeforeEach
     void setUp() {
-        AuthService authService = new AuthService(userService, sessionRegistry);
-        mvc = MockMvcBuilders.standaloneSetup(new AuthController(userService, authenticationManager, authService, sessionRegistry)).build();
+        AuthService authService = new AuthService(userService);
+        mvc = MockMvcBuilders.standaloneSetup(new AuthController(userService, authenticationManager, authService)).build();
     }
 
     //
     @Test
     void returnNotLoginByDefault() throws Exception {
-        mvc.perform(get("/auth")).andExpect(status().isOk())
+        mvc.perform(get("/auth/currentUser")).andExpect(status().isOk())
                 .andExpect(mvcResult -> Assertions.assertTrue(mvcResult.getResponse().getContentAsString(Charset.defaultCharset()).contains("用户没有登录")));
     }
 
@@ -69,7 +69,7 @@ class AuthControllerTest {
         /*
          * 未登录时，/auth接口返回未登录状态
          */
-        mvc.perform(get("/auth")).andExpect(status().isOk())
+        mvc.perform(get("/auth/currentUser")).andExpect(status().isOk())
                 .andExpect(mvcResult -> Assertions.assertTrue(mvcResult.getResponse().getContentAsString(Charset.defaultCharset()).contains("用户没有登录")));
 
         /*
@@ -95,7 +95,7 @@ class AuthControllerTest {
         HttpSession session = response.getRequest().getSession();
 
         assert session != null;
-        mvc.perform(get("/auth").session((MockHttpSession) session)).andExpect(status().isOk())
+        mvc.perform(get("/auth/currentUser").session((MockHttpSession) session)).andExpect(status().isOk())
                 .andExpect(mvcResult -> Assertions.assertTrue(mvcResult.getResponse().getContentAsString(Charset.defaultCharset()).contains("myUser")));
     }
 

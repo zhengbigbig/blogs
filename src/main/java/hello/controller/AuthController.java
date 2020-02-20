@@ -1,6 +1,5 @@
 package hello.controller;
 
-import com.alibaba.fastjson.JSONObject;
 import hello.entity.result.LoginResult;
 import hello.entity.result.NormalResult;
 import hello.entity.result.Result;
@@ -13,37 +12,33 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 // Filter->构造Token->AuthenticationManager->转给Provider处理->认证处理成功后续操作或者不通过抛异常
 @Log
 @RestController
+@RequestMapping("/auth")
 public class AuthController {
     private final UserService userService;
     private final AuthenticationManager authenticationManager;
     private final AuthService authService;
-    private final SessionRegistry sessionRegistry;
 
     @Inject
-    public AuthController(UserService userService, AuthenticationManager authenticationManager, AuthService authService, SessionRegistry sessionRegistry) {
+    public AuthController(UserService userService, AuthenticationManager authenticationManager, AuthService authService) {
         this.userService = userService;
         this.authenticationManager = authenticationManager;
         this.authService = authService;
-        this.sessionRegistry = sessionRegistry;
     }
 
-    @GetMapping("/auth")
+    @GetMapping("/currentUser")
     @ResponseBody // 将返回值限定在body里面
     public Object auth() {
         // 这里没有接入数据库，保存的信息是在内存中的，因此暂时读取不到，返回的是anonymousUser 匿名用户
@@ -52,13 +47,13 @@ public class AuthController {
                 .orElse(LoginResult.success("用户没有登录", false));
     }
 
-    @PostMapping("/auth/sendMail")
+    @PostMapping("/sendMail")
     @ResponseBody
     public Result<Object> sendMail(@RequestBody Map<String, String> registerUser) {
         return userService.sendMailIfSuccessThenSaveSms(registerUser);
     }
 
-    @PostMapping("/auth/register")
+    @PostMapping("/register")
     @ResponseBody
     public LoginResult register(@RequestBody Map<String, String> registerUser) {
         String username = registerUser.get("username");
@@ -106,7 +101,7 @@ public class AuthController {
         return null;
     }
 
-    @PostMapping("/auth/login")
+    @PostMapping("/login")
     @ResponseBody
     public Object login(@RequestBody Map<String, String> usernameAndPassword, HttpServletRequest request) {
 //        if (request.getHeader("user-agent") == null || !request.getHeader("user-agent").contains("Mozilla")) {
@@ -144,7 +139,7 @@ public class AuthController {
         }
     }
 
-    @GetMapping("/auth/logout")
+    @GetMapping("/logout")
     @ResponseBody
     public LoginResult logout() {
         SecurityContextHolder.clearContext();
@@ -153,7 +148,7 @@ public class AuthController {
                 .orElse(LoginResult.failure("未登录！"));
     }
 
-    @PostMapping("/auth/resetPw")
+    @PostMapping("/resetPw")
     @ResponseBody
     public NormalResult resetPw(@RequestBody Map<String, String> resetParamas) {
         // email -> 查用户 然后对用户密码进行修改
@@ -178,13 +173,5 @@ public class AuthController {
         }
     }
 
-    @GetMapping("/xxx")
-    @ResponseBody
-    public String sessions(@AuthenticationPrincipal User loginedUser) {
-        System.out.println(loginedUser);
-        List<Object> users = sessionRegistry.getAllPrincipals();
-        log.info(JSONObject.toJSONString(users));
-        return "xxx";
-    }
 
 }

@@ -47,14 +47,6 @@ create table sys_role_user
     user_id bigint not null,
     role_id bigint not null
 );
-insert into sys_role (name)
-values ('ROLE_ADMIN');
-insert into sys_role (name)
-values ('ROLE_EXECUTOR');
-insert into sys_role (name)
-values ('ROLE_USER');
-insert into sys_role_user (user_id, role_id)
-values (1, 1);
 
 #权限
 create table sys_permission_role
@@ -71,3 +63,18 @@ create table sys_permission
     url         varchar(100) not null,
     pid         int
 );
+
+#初始化权限
+insert into sys_role (name)
+values ('ROLE_ADMIN');
+insert into sys_role (name)
+values ('ROLE_EXECUTOR');
+insert into sys_role (name)
+values ('ROLE_USER');
+insert into sys_role_user (user_id, role_id)
+values (1, 1);
+
+insert into sys_permission (id, name, description, url, pid)
+values (1, 'ROLE_MANAGER_SESSION', '管理session', '/session/**', null);
+insert into sys_permission_role (role_id, permission_id)
+values (1, 1);
