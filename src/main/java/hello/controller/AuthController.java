@@ -112,9 +112,7 @@ public class AuthController {
         String username = usernameAndPassword.get("username");
         String password = usernameAndPassword.get("password");
 
-        // 命令这个服务去查找真正用户名的密码，具体实现可以是去数据库去找
         UserDetails userDetails;
-        // 判断用户存在与否，如果不存在则直接返回
         try {
             userDetails = userService.loadUserByUsername(username);
         } catch (UsernameNotFoundException e) {
@@ -129,7 +127,7 @@ public class AuthController {
             //  让真正的密码和请求的密码进行比对
             // AuthenticationManager 还可以提供多种认真方式，譬如密码，验证码，自定义AuthenticationProvider
             // 怎么确定使用哪个provider？ 只需要根据Token的类型，传入token，交给AuthenticationManager provider处理
-            authenticationManager.authenticate(authentication);
+            authenticationManager.authenticate(authentication); // 验证会再加载一次loadUserByUsername
             // 如果密码对比正确，则设置这个token
             // 把用户信息保存在内存中某一个地方
             // Cookie

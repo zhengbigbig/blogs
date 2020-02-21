@@ -1,14 +1,17 @@
 package hello.configuration;
 
+import hello.configuration.authentication.CustomAuthenticationProvider;
 import hello.configuration.interceptor.MyAccessDecisionManager;
 import hello.configuration.interceptor.MyFilterSecurityInterceptor;
 import hello.configuration.session.AjaxSessionInformationExpiredStrategy;
+import hello.configuration.session.CustomUsernamePasswordAuthenticationFilter;
 import hello.configuration.session.MyValidCodeProcessingFilter;
 import hello.configuration.unauthenticate.SimpleAccessDeniedHandler;
 import hello.configuration.unauthenticate.SimpleAuthenticationEntryPoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
@@ -45,9 +48,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     private UserDetailsService userService;
     @Inject
     private AjaxSessionInformationExpiredStrategy ajaxSessionInformationExpiredStrategy;
-    @Inject
-    private BCryptPasswordEncoder bCryptPasswordEncoder;
-
     //    @Inject
 //    private DataSource dataSource;
 //
@@ -83,12 +83,12 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .exceptionHandling()
                 .accessDeniedHandler(new SimpleAccessDeniedHandler()).authenticationEntryPoint(new SimpleAuthenticationEntryPoint());
-//        http
-//                .sessionManagement()
-//                .maximumSessions(1) // 只能一个地方登陆
-//                .maxSessionsPreventsLogin(false) // 阻止其他地方登陆
-//                .expiredSessionStrategy(ajaxSessionInformationExpiredStrategy) // session失效后的返回
-//                .sessionRegistry(sessionRegistry());
+        http
+                .sessionManagement()
+                .maximumSessions(1) // 只能一个地方登陆
+                .maxSessionsPreventsLogin(false) // 阻止其他地方登陆
+                .expiredSessionStrategy(ajaxSessionInformationExpiredStrategy) // session失效后的返回
+                .sessionRegistry(sessionRegistry());
         http
                 .logout()
                 .invalidateHttpSession(true)
@@ -97,7 +97,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         // 过滤器
 
         http
-//                .addFilterBefore(new MyValidCodeProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new CustomUsernamePasswordAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new MyFilterSecurityInterceptor(), FilterSecurityInterceptor.class);
 
 
@@ -109,13 +109,18 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     @Bean
     public AuthenticationManager authenticationManagerBean() throws Exception {
-        return authenticationManager();
+        return super.authenticationManagerBean();
     }
 
     // 全局的加密服务
-    @Inject
-    public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(userService).passwordEncoder(bCryptPasswordEncoder());
+    @Override
+    public void configure(AuthenticationManagerBuilder auth) throws Exception {
+        // 加入自定义的安全认证
+        auth
+                .userDetailsService(userService)
+                .passwordEncoder(bCryptPasswordEncoder())
+                .and()
+                .authenticationProvider(authenticationProvider());
     }
 
     // 对存储到数据库的密码进行加密
@@ -135,5 +140,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         return new HttpSessionEventPublisher();
     }
 
-
+    @Bean
+    public AuthenticationProvider authenticationProvider() {
+        AuthenticationProvider authenticationProvider = new CustomAuthenticationProvider();
+        return authenticationProvider;
+    }
 }
