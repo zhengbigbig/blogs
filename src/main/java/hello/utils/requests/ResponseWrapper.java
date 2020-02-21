@@ -1,4 +1,4 @@
-package hello.utils;
+package hello.utils.requests;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;

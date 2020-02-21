@@ -1,10 +1,16 @@
 package hello.configuration.interceptor;
 
+import com.google.common.collect.ImmutableMap;
+import hello.utils.ApiRRException;
+import hello.utils.requests.RequestUtils;
+import org.springframework.security.access.AccessDecisionManager;
 import org.springframework.security.access.SecurityMetadataSource;
 import org.springframework.security.access.intercept.AbstractSecurityInterceptor;
 import org.springframework.security.access.intercept.InterceptorStatusToken;
 import org.springframework.security.web.FilterInvocation;
 import org.springframework.security.web.access.intercept.FilterInvocationSecurityMetadataSource;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
@@ -24,18 +30,20 @@ import java.io.IOException;
 
  */
 
-@Service
 public class MyFilterSecurityInterceptor extends AbstractSecurityInterceptor implements Filter {
-    private FilterInvocationSecurityMetadataSource securityMetadataSource;
-
     @Inject
-    public MyFilterSecurityInterceptor(FilterInvocationSecurityMetadataSource securityMetadataSource) {
-        this.securityMetadataSource = securityMetadataSource;
+    private MyInvocationSecurityMetadataSourceService securityMetadataSource;
+
+
+    @Override
+    @Inject
+    public void setAccessDecisionManager(AccessDecisionManager accessDecisionManager) {
+        super.setAccessDecisionManager(accessDecisionManager);
     }
 
-    @Inject
-    public void setAccessDecisionManager(MyAccessDecisionManager myAccessDecisionManager) {
-        super.setAccessDecisionManager(myAccessDecisionManager);
+    @Override
+    public void init(FilterConfig filterConfig) throws ServletException {
+
     }
 
     @Override
@@ -48,11 +56,33 @@ public class MyFilterSecurityInterceptor extends AbstractSecurityInterceptor imp
         // 验证Context中的Authentication和目标url所需权限是否匹配，匹配则通过，不通过则抛出异常
         InterceptorStatusToken token = super.beforeInvocation(fi);
         try {
-            //执行下一个拦截器 请求真正的controller
+            // 执行下一个拦截器
             fi.getChain().doFilter(fi.getRequest(), fi.getResponse());
         } finally {
             super.afterInvocation(token, null);
         }
+//        try {
+//            InterceptorStatusToken token = super.beforeInvocation(fi);
+//
+//            try {
+//                //执行下一个拦截器 请求真正的controller
+//                fi.getChain().doFilter(fi.getRequest(), fi.getResponse());
+//            } finally {
+//                super.afterInvocation(token, null);
+//            }
+//        } catch (ApiRRException e) {
+//            ImmutableMap<String, String> message = ImmutableMap.of(
+//                    "uri", fi.getRequest().getRequestURI(),
+//                    "msg", e.getMsg(),
+//                    "status", "error"
+//            );
+//            RequestUtils.sendMessageToResponse(
+//                    fi.getResponse(),
+//                    message,
+//                    e.getError()
+//            );
+//        }
+
 
     }
 
@@ -66,11 +96,6 @@ public class MyFilterSecurityInterceptor extends AbstractSecurityInterceptor imp
     @Override
     public SecurityMetadataSource obtainSecurityMetadataSource() {
         return this.securityMetadataSource;
-    }
-
-    @Override
-    public void init(FilterConfig filterConfig) throws ServletException {
-
     }
 
     @Override

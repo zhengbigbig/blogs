@@ -1,7 +1,7 @@
 package hello.configuration.session;
 
 import com.alibaba.fastjson.JSONObject;
-import hello.utils.RequestUtils;
+import hello.utils.requests.RequestUtils;
 import org.springframework.security.web.session.SessionInformationExpiredEvent;
 import org.springframework.security.web.session.SessionInformationExpiredStrategy;
 import org.springframework.stereotype.Service;

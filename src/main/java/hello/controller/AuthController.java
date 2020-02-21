@@ -44,7 +44,7 @@ public class AuthController {
         // 这里没有接入数据库，保存的信息是在内存中的，因此暂时读取不到，返回的是anonymousUser 匿名用户
         return authService.getCurrentUser()
                 .map(LoginResult::success)
-                .orElse(LoginResult.success("用户没有登录", false));
+                .orElse(LoginResult.failure("当前未登录"));
     }
 
     @PostMapping("/sendMail")

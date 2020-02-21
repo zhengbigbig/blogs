@@ -26,6 +26,7 @@ public class MyInvocationSecurityMetadataSourceService implements FilterInvocati
         this.permissionMapper = permissionMapper;
     }
 
+
     /*
     当接收到一个http请求时, filterSecurityInterceptor会调用的方法.
     参数object是一个包含url信息的HttpServletRequest实例.
@@ -50,7 +51,7 @@ public class MyInvocationSecurityMetadataSourceService implements FilterInvocati
 
         //防止数据库中没有数据，不能进行权限拦截
         if (collection.size() < 1) {
-            ConfigAttribute configAttribute = new SecurityConfig("NO_NEED_RIGHT");
+            ConfigAttribute configAttribute = new SecurityConfig("ROLE_ANONYMOUS");
             collection.add(configAttribute);
         }
         return collection;

@@ -33,7 +33,8 @@ public class MyAccessDecisionManager implements AccessDecisionManager {
             ConfigAttribute ca = iterator.next();
             //当前请求需要无权限url
             String needRole = ca.getAttribute();
-            if ("NO_NEED_RIGHT".equals(needRole)) {
+            if ("ROLE_ANONYMOUS".equals(needRole)) {
+//                throw new ApiRRException("请先登录!", 403);
                 return;
             }
             //当前用户所具有的权限

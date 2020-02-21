@@ -1,12 +1,16 @@
-package hello.utils;
+package hello.utils.requests;
 
 
 import com.alibaba.fastjson.JSONObject;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.http.MediaType;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -37,31 +41,19 @@ public class RequestUtils {
         return false;
     }
 
-
-    public static Map<String, Object> getBodyToMap(HttpServletRequest request) {
-
-
-        BufferedReader br = null;
-        StringBuilder sb = new StringBuilder("");
-        try {
-            br = request.getReader();
-            String str;
-            while ((str = br.readLine()) != null) {
-                sb.append(str);
-            }
-            br.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (null != br) {
-                try {
-                    br.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        return Optional.ofNullable((Map<String, Object>) JSONObject.parseObject(sb.toString())).orElse(new HashMap<>());
+    public static void sendMessageToResponse(
+            HttpServletResponse response,
+            Map<String, String> body, int responseStatus
+    ) throws IOException {
+        response.setStatus(responseStatus);
+        response.setCharacterEncoding("utf-8");
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        ObjectMapper objectMapper = new ObjectMapper();
+        String resBody = objectMapper.writeValueAsString(body);
+        PrintWriter printWriter = response.getWriter();
+        printWriter.print(resBody);
+        printWriter.flush();
+        printWriter.close();
     }
 
 }

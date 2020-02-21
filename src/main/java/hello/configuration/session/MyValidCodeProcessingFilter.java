@@ -4,14 +4,16 @@ import com.alibaba.fastjson.JSONObject;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hello.entity.result.LoginResult;
-import hello.utils.RequestWrapper;
+import hello.utils.requests.RequestWrapper;
 import lombok.extern.java.Log;
 import org.apache.commons.io.IOUtils;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import javax.inject.Inject;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -23,9 +25,13 @@ import java.util.Map;
 
 @Log
 public class MyValidCodeProcessingFilter extends OncePerRequestFilter {
-    private final SessionRegistry sessionRegistry;
-    private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    private SessionRegistry sessionRegistry;
+    private BCryptPasswordEncoder bCryptPasswordEncoder;
 
+    public MyValidCodeProcessingFilter() {
+    }
+
+    @Inject
     public MyValidCodeProcessingFilter(SessionRegistry sessionRegistry, BCryptPasswordEncoder bCryptPasswordEncoder) {
         this.sessionRegistry = sessionRegistry;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
@@ -44,8 +50,8 @@ public class MyValidCodeProcessingFilter extends OncePerRequestFilter {
                 String password = (String) map.get("password");
                 //用户登陆，暂不设置权限
                 UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(username, bCryptPasswordEncoder.encode(password));
-//        SecurityContextHolder.getContext().setAuthentication(authentication);
-                //        //用户名密码验证通过后,注册session
+                //用户名密码验证通过后,注册session
+                log.info("login拦截器:" + request.getSession().getId());
                 sessionRegistry.registerNewSession(request.getSession().getId(), token.getPrincipal());
                 filterChain.doFilter(requestWrapper, response);
             } catch (Exception e) {

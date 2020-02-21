@@ -1,5 +1,6 @@
 package hello.configuration;
 
+import hello.configuration.interceptor.MyAccessDecisionManager;
 import hello.configuration.interceptor.MyFilterSecurityInterceptor;
 import hello.configuration.session.AjaxSessionInformationExpiredStrategy;
 import hello.configuration.session.MyValidCodeProcessingFilter;
@@ -43,11 +44,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Inject
     private UserDetailsService userService;
     @Inject
-    private MyFilterSecurityInterceptor myFilterSecurityInterceptor;
-    @Inject
     private AjaxSessionInformationExpiredStrategy ajaxSessionInformationExpiredStrategy;
-    @Inject
-    SessionRegistry sessionRegistry;
     @Inject
     private BCryptPasswordEncoder bCryptPasswordEncoder;
 
@@ -63,37 +60,51 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 //        return tokenRepository;
 //    }
 //
+
+    @Override
+    public void configure(WebSecurity web) throws Exception {
+        web.ignoring().antMatchers("/index.html","/error/**", "/static/**");
+    }
+
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         // csrf默认是开启的，会导致访问403，需要先关闭，一种跨站请求伪造，对post有效
         http
+                .csrf().disable().cors();
+        http
                 // 授权请求，通配符匹配路径，允许匹配的所有
                 .authorizeRequests()
-                .antMatchers("/", "/auth/**").permitAll()
+//                .antMatchers("/", "/auth/**").permitAll()
 
                 .anyRequest().authenticated().and()
                 .exceptionHandling()
-                .accessDeniedHandler(new SimpleAccessDeniedHandler()).authenticationEntryPoint(new SimpleAuthenticationEntryPoint())
-                .and()
-                .addFilterBefore(new MyValidCodeProcessingFilter(sessionRegistry, bCryptPasswordEncoder), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(myFilterSecurityInterceptor, FilterSecurityInterceptor.class)
-                .csrf().disable()
-                .logout()
-                .invalidateHttpSession(true)
-                .clearAuthentication(true)
-                .permitAll()
-
-                .and()
+                .accessDeniedHandler(new SimpleAccessDeniedHandler()).authenticationEntryPoint(new SimpleAuthenticationEntryPoint());
+        http
                 .sessionManagement()
                 .maximumSessions(1) // 只能一个地方登陆
                 .maxSessionsPreventsLogin(false) // 阻止其他地方登陆
                 .expiredSessionStrategy(ajaxSessionInformationExpiredStrategy) // session失效后的返回
-                .sessionRegistry(sessionRegistry);
+                .sessionRegistry(sessionRegistry());
+        http
+                .logout()
+                .invalidateHttpSession(true)
+                .clearAuthentication(true)
+                .permitAll();
+        // 过滤器
+
+        http
+                .addFilterBefore(new MyValidCodeProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new MyFilterSecurityInterceptor(), FilterSecurityInterceptor.class);
+
+
     }
 
-    //    // 鉴权
+    /*
+     * 认证管理器
+     */
+    @Override
     @Bean
-    public AuthenticationManager customAuthenticationManager() throws Exception {
+    public AuthenticationManager authenticationManagerBean() throws Exception {
         return authenticationManager();
     }
 
@@ -101,11 +112,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Inject
     public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
         auth.userDetailsService(userService).passwordEncoder(bCryptPasswordEncoder());
-    }
-
-    @Override
-    public void configure(WebSecurity web) throws Exception {
-        web.ignoring().antMatchers("/index.html", "/static/**");
     }
 
     // 对存储到数据库的密码进行加密
@@ -116,7 +122,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     // 自定义session
     @Bean
-    public SessionRegistry getSessionRegistry() {
+    public SessionRegistry sessionRegistry() {
         return new SessionRegistryImpl();
     }
 
@@ -124,5 +130,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     public HttpSessionEventPublisher httpSessionEventPublisher() {
         return new HttpSessionEventPublisher();
     }
+
 
 }

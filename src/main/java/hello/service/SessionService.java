@@ -46,8 +46,8 @@ public class SessionService {
                 .collect(Collectors.toList());
         if (usersOnline.size() > 0) {
             return ObjectResult.success("获取成功", usersOnline);
-        } else {
-            return ObjectResult.failure("当前无用户在线");
         }
+        return ObjectResult.failure("当前无用户在线");
+
     }
 }
