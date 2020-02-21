@@ -22,4 +22,5 @@ public class AuthService {
         return Optional.ofNullable(userService.getUserByUsernameOrEmail(authentication == null ? null : authentication.getName()));
     }
 
+
 }

@@ -9,6 +9,7 @@ import hello.service.UserService;
 import hello.utils.ValidateUtils;
 import lombok.extern.java.Log;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -102,6 +103,7 @@ public class AuthController {
         return null;
     }
 
+    @Secured("IS_AUTHENTICATED_ANONYMOUSLY")
     @PostMapping("/login")
     @ResponseBody
     public Object login(@RequestBody Map<String, String> usernameAndPassword, HttpServletRequest request) {

@@ -7,13 +7,11 @@ import org.springframework.security.access.ConfigAttribute;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.stereotype.Service;
 
 import java.util.Collection;
 import java.util.Iterator;
 
 @Log
-@Service
 public class MyAccessDecisionManager implements AccessDecisionManager {
 
     /**

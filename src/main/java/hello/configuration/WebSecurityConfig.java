@@ -3,16 +3,19 @@ package hello.configuration;
 import hello.configuration.authentication.CustomAuthenticationProvider;
 import hello.configuration.interceptor.MyAccessDecisionManager;
 import hello.configuration.interceptor.MyFilterSecurityInterceptor;
+import hello.configuration.interceptor.MyInvocationSecurityMetadataSourceService;
 import hello.configuration.session.AjaxSessionInformationExpiredStrategy;
 import hello.configuration.session.CustomUsernamePasswordAuthenticationFilter;
 import hello.configuration.session.MyValidCodeProcessingFilter;
 import hello.configuration.unauthenticate.SimpleAccessDeniedHandler;
 import hello.configuration.unauthenticate.SimpleAuthenticationEntryPoint;
+import hello.dao.PermissionMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -29,6 +32,7 @@ import javax.inject.Inject;
 
 @Configuration
 @EnableWebSecurity
+@EnableGlobalMethodSecurity(securedEnabled = true)
 // 告诉spring 加上web安全模块，设置后，所有的请求都会被拦截
 // 权限管理核心：需要实现AuthenticationManager、accessDecisionManager
 // 1.登陆验证拦截器AuthenticationProcessingFilter
@@ -48,6 +52,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     private UserDetailsService userService;
     @Inject
     private AjaxSessionInformationExpiredStrategy ajaxSessionInformationExpiredStrategy;
+    @Inject
+    private PermissionMapper permissionMapper;
     //    @Inject
 //    private DataSource dataSource;
 //
@@ -62,7 +68,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 //
     private final String[] ignoredURI = {
             "/index.html", "/error/**", "/static/**", // 静态资源
-            "/auth/**",
+//            "/auth/**",
     };
 
     @Override
@@ -98,9 +104,15 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
         http
                 .addFilterBefore(new CustomUsernamePasswordAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(new MyFilterSecurityInterceptor(), FilterSecurityInterceptor.class);
+                .addFilterBefore(myFilterSecurityInterceptor(), FilterSecurityInterceptor.class);
 
 
+    }
+
+    public MyFilterSecurityInterceptor myFilterSecurityInterceptor() {
+        MyFilterSecurityInterceptor myFilterSecurityInterceptor = new MyFilterSecurityInterceptor(permissionMapper);
+        myFilterSecurityInterceptor.setAccessDecisionManager(new MyAccessDecisionManager());
+        return myFilterSecurityInterceptor;
     }
 
     /*

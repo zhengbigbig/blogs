@@ -7,9 +7,7 @@ import org.springframework.security.access.ConfigAttribute;
 import org.springframework.security.access.SecurityConfig;
 import org.springframework.security.web.FilterInvocation;
 import org.springframework.security.web.access.intercept.FilterInvocationSecurityMetadataSource;
-import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -17,11 +15,9 @@ import java.util.List;
 
 // 用来储存请求与权限的对应关系
 @Log
-@Service
 public class MyInvocationSecurityMetadataSourceService implements FilterInvocationSecurityMetadataSource {
     private PermissionMapper permissionMapper;
 
-    @Inject
     public MyInvocationSecurityMetadataSourceService(PermissionMapper permissionMapper) {
         this.permissionMapper = permissionMapper;
     }
