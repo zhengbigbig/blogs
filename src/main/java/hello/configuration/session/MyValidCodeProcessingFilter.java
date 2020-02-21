@@ -66,7 +66,7 @@ public class MyValidCodeProcessingFilter extends OncePerRequestFilter {
             }
 
         } else {
-            filterChain.doFilter(requestWrapper, response);
+            super.doFilter(requestWrapper,response,filterChain);
         }
     }
 

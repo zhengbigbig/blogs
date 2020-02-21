@@ -60,10 +60,15 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 //        return tokenRepository;
 //    }
 //
+    private final String[] ignoredURI = {
+            "/index.html", "/error/**", "/static/**", // 静态资源
+            "/auth/**",
+    };
 
     @Override
     public void configure(WebSecurity web) throws Exception {
-        web.ignoring().antMatchers("/index.html","/error/**", "/static/**");
+        web.ignoring().antMatchers(ignoredURI);
+
     }
 
     @Override
@@ -74,17 +79,16 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         http
                 // 授权请求，通配符匹配路径，允许匹配的所有
                 .authorizeRequests()
-//                .antMatchers("/", "/auth/**").permitAll()
-
-                .anyRequest().authenticated().and()
+                .anyRequest().authenticated()
+                .and()
                 .exceptionHandling()
                 .accessDeniedHandler(new SimpleAccessDeniedHandler()).authenticationEntryPoint(new SimpleAuthenticationEntryPoint());
-        http
-                .sessionManagement()
-                .maximumSessions(1) // 只能一个地方登陆
-                .maxSessionsPreventsLogin(false) // 阻止其他地方登陆
-                .expiredSessionStrategy(ajaxSessionInformationExpiredStrategy) // session失效后的返回
-                .sessionRegistry(sessionRegistry());
+//        http
+//                .sessionManagement()
+//                .maximumSessions(1) // 只能一个地方登陆
+//                .maxSessionsPreventsLogin(false) // 阻止其他地方登陆
+//                .expiredSessionStrategy(ajaxSessionInformationExpiredStrategy) // session失效后的返回
+//                .sessionRegistry(sessionRegistry());
         http
                 .logout()
                 .invalidateHttpSession(true)
@@ -93,7 +97,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         // 过滤器
 
         http
-                .addFilterBefore(new MyValidCodeProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
+//                .addFilterBefore(new MyValidCodeProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new MyFilterSecurityInterceptor(), FilterSecurityInterceptor.class);
 
 
