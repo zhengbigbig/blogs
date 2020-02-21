@@ -1,4 +1,4 @@
-package hello.utils;
+package hello.utils.exception;
 
 import lombok.Getter;
 import lombok.Setter;

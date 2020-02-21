@@ -29,7 +29,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
      */
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        String username = authentication.getName();
+        String username = (String) authentication.getPrincipal();
         String password = (String) authentication.getCredentials();
         if (StringUtils.isBlank(username)) {
             throw new UsernameNotFoundException("username用户名不可以为空");

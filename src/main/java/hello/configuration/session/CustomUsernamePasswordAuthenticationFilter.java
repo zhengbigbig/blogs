@@ -1,22 +1,45 @@
 package hello.configuration.session;
 
+import com.alibaba.fastjson.JSONObject;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import hello.service.UserService;
+import hello.utils.requests.RequestUtils;
+import hello.utils.requests.RequestWrapper;
+import lombok.SneakyThrows;
+import lombok.extern.java.Log;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
+@Log
 public class CustomUsernamePasswordAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
-    public static final String USERNAME = "j_username";
-    public static final String PASSWORD = "j_password";
+    private ThreadLocal<Map<String, String>> threadLocal = new ThreadLocal<>();
+
+    private UserDetailsService userService;
+
+    public CustomUsernamePasswordAuthenticationFilter(UserDetailsService userService) {
+        this.userService = userService;
+    }
+
     /**
-     * @Description:用户登录验证方法入口
      * @param :args
      * @return
      * @throws Exception
+     * @Description:用户登录验证方法入口
      */
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request,
@@ -27,29 +50,11 @@ public class CustomUsernamePasswordAuthenticationFilter extends UsernamePassword
                     "Authentication method not supported: "
                             + request.getMethod());
         }
-        String username = this.obtainUsername(request);
         String password = this.obtainPassword(request);
-        // 加密密码(根据“密码{用户名})进行加密
-        // String sh1Password = password + "{" + username + "}";
-        // PasswordEncoder passwordEncoder = new
-        // StandardPasswordEncoderForSha1();
-        // String result = passwordEncoder.encode(sh1Password);
-        // UserInfo userDetails = (UserInfo)
-        // userDetailsService.loadUserByUsername(username);
-        if (username == null) {
-            username = "";
-        }
-
-        if (password == null) {
-            password = "";
-        }
-
-        username = username.trim();
+        String username = this.obtainUsername(request);
 
         UsernamePasswordAuthenticationToken authRequest = new UsernamePasswordAuthenticationToken(
                 username, password);
-
-        // Allow subclasses to set the "details" property
         this.setDetails(request, authRequest);
 
         return this.getAuthenticationManager().authenticate(authRequest);
@@ -57,30 +62,58 @@ public class CustomUsernamePasswordAuthenticationFilter extends UsernamePassword
     }
 
 
-
     /**
-     * @Description:获取密码
      * @param :args
      * @return
      * @throws Exception
+     * @Description:获取密码
      */
     @Override
     protected String obtainPassword(HttpServletRequest request) {
-        // TODO Auto-generated method stub
-        Object obj = request.getParameter(PASSWORD);
-        return null == obj ? "" : obj.toString();
+        String password = this.getBodyParams(request).get(super.SPRING_SECURITY_FORM_PASSWORD_KEY);
+        if (!StringUtils.isEmpty(password)) {
+            return password;
+        }
+        return super.obtainPassword(request);
+
     }
 
     /**
-     * @Description:获取用户名
      * @param :args
      * @return
      * @throws Exception
+     * @Description:获取用户名
      */
     @Override
     protected String obtainUsername(HttpServletRequest request) {
-        // TODO Auto-generated method stub
-        Object obj = request.getParameter(USERNAME);
-        return null == obj ? "" : obj.toString().trim().toLowerCase();
+        String username = this.getBodyParams(request).get(super.SPRING_SECURITY_FORM_USERNAME_KEY);
+        if (!StringUtils.isEmpty(username)) {
+            return username;
+        }
+        return super.obtainUsername(request);
+
+    }
+
+    /**
+     * 获取body参数  body中的参数只能获取一次
+     *
+     * @param request
+     * @return
+     */
+    private Map<String, String> getBodyParams(HttpServletRequest request) {
+        Map<String, String> bodyParams = threadLocal.get();
+        if (bodyParams == null) {
+            ObjectMapper objectMapper = new ObjectMapper();
+            try (InputStream is = request.getInputStream()) {
+                bodyParams = objectMapper.readValue(is, Map.class);
+            } catch (IOException e) {
+            }
+            if (bodyParams == null) {
+                bodyParams = new HashMap<>();
+            }
+            threadLocal.set(bodyParams);
+        }
+
+        return bodyParams;
     }
 }

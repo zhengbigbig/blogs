@@ -3,10 +3,8 @@ package hello.configuration;
 import hello.configuration.authentication.CustomAuthenticationProvider;
 import hello.configuration.interceptor.MyAccessDecisionManager;
 import hello.configuration.interceptor.MyFilterSecurityInterceptor;
-import hello.configuration.interceptor.MyInvocationSecurityMetadataSourceService;
 import hello.configuration.session.AjaxSessionInformationExpiredStrategy;
 import hello.configuration.session.CustomUsernamePasswordAuthenticationFilter;
-import hello.configuration.session.MyValidCodeProcessingFilter;
 import hello.configuration.unauthenticate.SimpleAccessDeniedHandler;
 import hello.configuration.unauthenticate.SimpleAuthenticationEntryPoint;
 import hello.dao.PermissionMapper;
@@ -68,7 +66,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 //
     private final String[] ignoredURI = {
             "/index.html", "/error/**", "/static/**", // 静态资源
-//            "/auth/**",
+            "/auth/**",
     };
 
     @Override
@@ -96,15 +94,19 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .expiredSessionStrategy(ajaxSessionInformationExpiredStrategy) // session失效后的返回
                 .sessionRegistry(sessionRegistry());
         http
+                .formLogin().loginProcessingUrl("/login")
+                .permitAll()
+                .and()
                 .logout()
+                .logoutSuccessUrl("/logout")
                 .invalidateHttpSession(true)
                 .clearAuthentication(true)
                 .permitAll();
         // 过滤器
 
         http
-                .addFilterBefore(new CustomUsernamePasswordAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(myFilterSecurityInterceptor(), FilterSecurityInterceptor.class);
+                .addFilterBefore(myFilterSecurityInterceptor(), FilterSecurityInterceptor.class)
+                .addFilterBefore(customUsernamePasswordAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
 
     }
@@ -115,13 +117,19 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         return myFilterSecurityInterceptor;
     }
 
+    public CustomUsernamePasswordAuthenticationFilter customUsernamePasswordAuthenticationFilter() throws Exception {
+        CustomUsernamePasswordAuthenticationFilter filter = new CustomUsernamePasswordAuthenticationFilter(userService);
+        filter.setAuthenticationManager(authenticationManager());
+        return filter;
+    }
+
     /*
      * 认证管理器
      */
-    @Override
     @Bean
-    public AuthenticationManager authenticationManagerBean() throws Exception {
-        return super.authenticationManagerBean();
+    @Override
+    protected AuthenticationManager authenticationManager() throws Exception {
+        return super.authenticationManager();
     }
 
     // 全局的加密服务

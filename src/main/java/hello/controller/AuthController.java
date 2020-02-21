@@ -27,7 +27,6 @@ import java.util.Optional;
 // Filter->构造Token->AuthenticationManager->转给Provider处理->认证处理成功后续操作或者不通过抛异常
 @Log
 @RestController
-@RequestMapping("/auth")
 public class AuthController {
     private final UserService userService;
     private final AuthenticationManager authenticationManager;
@@ -40,7 +39,7 @@ public class AuthController {
         this.authService = authService;
     }
 
-    @GetMapping("/currentUser")
+    @GetMapping("/auth")
     @ResponseBody // 将返回值限定在body里面
     public Object auth() {
         // 这里没有接入数据库，保存的信息是在内存中的，因此暂时读取不到，返回的是anonymousUser 匿名用户
@@ -49,13 +48,13 @@ public class AuthController {
                 .orElse(LoginResult.failure("当前未登录"));
     }
 
-    @PostMapping("/sendMail")
+    @PostMapping("/auth/sendMail")
     @ResponseBody
     public Result<Object> sendMail(@RequestBody Map<String, String> registerUser) {
         return userService.sendMailIfSuccessThenSaveSms(registerUser);
     }
 
-    @PostMapping("/register")
+    @PostMapping("/auth/register")
     @ResponseBody
     public LoginResult register(@RequestBody Map<String, String> registerUser) {
         String username = registerUser.get("username");
@@ -152,7 +151,7 @@ public class AuthController {
                 .orElse(LoginResult.failure("未登录！"));
     }
 
-    @PostMapping("/resetPw")
+    @PostMapping("/auth/resetPw")
     @ResponseBody
     public NormalResult resetPw(@RequestBody Map<String, String> resetParamas) {
         // email -> 查用户 然后对用户密码进行修改
