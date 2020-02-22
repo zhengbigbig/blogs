@@ -1,4 +1,4 @@
-package hello.configuration.session;
+package hello.configuration.authentication.session;
 
 import com.alibaba.fastjson.JSONObject;
 import hello.utils.requests.RequestUtils;

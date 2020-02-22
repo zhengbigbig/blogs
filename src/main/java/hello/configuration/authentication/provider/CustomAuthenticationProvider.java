@@ -1,26 +1,28 @@
-package hello.configuration.authentication;
+package hello.configuration.authentication.provider;
 
+import hello.configuration.authentication.token.EmailLoginAuthenticationToken;
 import hello.service.UserService;
+import lombok.extern.java.Log;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
 import java.util.Collection;
 
+@Log
 public class CustomAuthenticationProvider implements AuthenticationProvider {
     @Inject
     private UserService userService;
     @Inject
     private BCryptPasswordEncoder bCryptPasswordEncoder;
+
 
     /**
      * @param authentication 认证
@@ -29,8 +31,10 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
      */
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        String username = (String) authentication.getPrincipal();
-        String password = (String) authentication.getCredentials();
+        EmailLoginAuthenticationToken token = (EmailLoginAuthenticationToken) authentication;
+        String username = (String) token.getPrincipal();
+        String password = (String) token.getCredentials();
+
         if (StringUtils.isBlank(username)) {
             throw new UsernameNotFoundException("username用户名不可以为空");
         }
@@ -44,11 +48,18 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
             //发布密码不正确事件
             throw new BadCredentialsException("密码不正确");
         }
+        log.info("authenticated user " + username + ", setting security context");
         //获取用户权限信息
         Collection<? extends GrantedAuthority> authorities = user.getAuthorities();
-        return new UsernamePasswordAuthenticationToken(user, password, authorities);
-
+        try {
+            EmailLoginAuthenticationToken checkedAuthentication = new EmailLoginAuthenticationToken(user, bCryptPasswordEncoder.encode(password), authorities);
+            checkedAuthentication.setSession(token.getSession());
+            return checkedAuthentication;
+        } catch (Exception e) {
+            throw new BadCredentialsException("认证不通过");
+        }
     }
+
 
     /**
      * 如果该AuthenticationProvider支持传入的Authentication对象，则返回true
@@ -59,6 +70,8 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
     @Override
     public boolean supports(Class<?> clazz) {
         return clazz.equals(
-                UsernamePasswordAuthenticationToken.class);
+                EmailLoginAuthenticationToken.class);
     }
+
+
 }

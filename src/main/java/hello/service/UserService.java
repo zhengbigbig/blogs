@@ -58,7 +58,6 @@ public class UserService implements UserDetailsService {
         for (Permission permission : permissions) {
             authorities.add(new SimpleGrantedAuthority(permission.getName()));
         }
-        log.info("loadUserByUsername" + user);
         user.setAuthorities(authorities); //用于登录时 @AuthenticationPrincipal 标签取值
         return user;
     }

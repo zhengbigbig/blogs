@@ -1,4 +1,4 @@
-package hello.configuration.listener;
+package hello.configuration.authentication.listener;
 
 import lombok.extern.java.Log;
 import org.springframework.stereotype.Service;

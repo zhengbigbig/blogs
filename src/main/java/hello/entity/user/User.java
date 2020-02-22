@@ -3,6 +3,8 @@ package hello.entity.user;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -10,6 +12,8 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 
+@Getter
+@Setter
 public class User implements UserDetails {
 
     private static final long serialVersionUID = -7571859707880852198L;
@@ -28,7 +32,7 @@ public class User implements UserDetails {
     private Instant createdAt;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Instant updatedAt;
-    @SuppressFBWarnings("SE_BAD_FIELD")
+
     private List<Role> roles;
     @JsonIgnore
     private List<? extends GrantedAuthority> authorities;
@@ -70,6 +74,8 @@ public class User implements UserDetails {
         this.roles = roles;
         this.authorities = authorities;
     }
+
+
 
     @JsonIgnore
     @Override
@@ -134,99 +140,4 @@ public class User implements UserDetails {
         return super.toString();
     }
 
-    public Integer getId() {
-        return id;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getEncryptedPassword() {
-        return encryptedPassword;
-    }
-
-    public void setEncryptedPassword(String encryptedPassword) {
-        this.encryptedPassword = encryptedPassword;
-    }
-
-    public String getAvatar() {
-        return avatar;
-    }
-
-    public void setAvatar(String avatar) {
-        this.avatar = avatar;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public Integer getSex() {
-        return sex;
-    }
-
-    public void setSex(Integer sex) {
-        this.sex = sex;
-    }
-
-    public String getSummary() {
-        return summary;
-    }
-
-    public void setSummary(String summary) {
-        this.summary = summary;
-    }
-
-    public String getProfession() {
-        return profession;
-    }
-
-    public void setProfession(String profession) {
-        this.profession = profession;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    public String getTechnologyStack() {
-        return technologyStack;
-    }
-
-    public void setTechnologyStack(String technologyStack) {
-        this.technologyStack = technologyStack;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Instant getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Instant updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public List<Role> getRoles() {
-        return roles;
-    }
-
-    public void setRoles(List<Role> roles) {
-        this.roles = roles;
-    }
 }

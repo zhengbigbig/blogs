@@ -3,6 +3,7 @@ package hello.utils.requests;
 
 import com.alibaba.fastjson.JSONObject;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.java.Log;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpMethod;
@@ -17,9 +18,16 @@ import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.util.Map;
 
+@Log
 public class RequestUtils {
     private static final String LOGIN_URL = "/login";
 
+    /**
+     * TODO 判断是否是ajax请求
+     *
+     * @param request request
+     * @return boolean
+     */
     public static boolean isAjaxRequest(HttpServletRequest request) {
 
         String accept = request.getHeader("accept");
@@ -45,23 +53,38 @@ public class RequestUtils {
         return false;
     }
 
-    public static void sendMessageToResponse(
-            HttpServletResponse response,
-            Map<String, String> body, int responseStatus
-    ) throws IOException {
-        response.setStatus(responseStatus);
-        response.setCharacterEncoding("utf-8");
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        ObjectMapper objectMapper = new ObjectMapper();
-        String resBody = objectMapper.writeValueAsString(body);
-        PrintWriter printWriter = response.getWriter();
-        printWriter.print(resBody);
-        printWriter.flush();
-        printWriter.close();
+
+    /**
+     * TODO 自定义返回http响应
+     *
+     * @param response       HttpServletResponse
+     * @param body           responseBody
+     * @param responseStatus httpStatus
+     * @throws IOException
+     */
+    public static void sendMessageToResponse(HttpServletResponse response, Map<String, Object> body, int responseStatus, String logMessage) {
+        try {
+            response.setStatus(responseStatus);
+            response.setCharacterEncoding("utf-8");
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            ObjectMapper objectMapper = new ObjectMapper();
+            String resBody = objectMapper.writeValueAsString(body);
+            PrintWriter printWriter = response.getWriter();
+            printWriter.print(resBody);
+            printWriter.flush();
+            printWriter.close();
+        } catch (IOException e) {
+            log.info(logMessage);
+        }
     }
 
-    public static boolean isSecurityAccessDecisionToIgnore(
-            HttpServletRequest request) {
+    /**
+     * TODO 需要忽视的安全的文件资源
+     *
+     * @param request
+     * @return
+     */
+    public static boolean isSecurityAccessDecisionToIgnore(HttpServletRequest request) {
         //OrRequestMatcher or组合多个RequestMatcher
         OrRequestMatcher patternMatcher = new OrRequestMatcher(
                 new AntPathRequestMatcher(LOGIN_URL, HttpMethod.POST.name())
@@ -69,6 +92,14 @@ public class RequestUtils {
         return patternMatcher.matches(request);
     }
 
+    /**
+     * TODO 从请求中获取Body
+     *
+     * @param request
+     * @param want
+     * @return
+     * @throws IOException
+     */
     public static Map<String, Object> getBodyFromRequest(HttpServletRequest request, String want) throws IOException {
         RequestWrapper requestWrapper = new RequestWrapper(request);
         String bodyParam = IOUtils.toString(requestWrapper.getInputStream(), Charset.defaultCharset());

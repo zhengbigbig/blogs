@@ -1,10 +1,12 @@
 package hello.configuration;
 
-import hello.configuration.authentication.CustomAuthenticationProvider;
-import hello.configuration.interceptor.MyAccessDecisionManager;
-import hello.configuration.interceptor.MyFilterSecurityInterceptor;
-import hello.configuration.session.AjaxSessionInformationExpiredStrategy;
-import hello.configuration.session.CustomUsernamePasswordAuthenticationFilter;
+import hello.configuration.authentication.provider.CustomAuthenticationProvider;
+import hello.configuration.authentication.handler.CustomAuthenticationFailHandler;
+import hello.configuration.authentication.handler.CustomAuthenticationSuccessHandler;
+import hello.configuration.security.MyAccessDecisionManager;
+import hello.configuration.security.MyFilterSecurityInterceptor;
+import hello.configuration.authentication.session.AjaxSessionInformationExpiredStrategy;
+import hello.configuration.authentication.CustomUsernamePasswordAuthenticationFilter;
 import hello.configuration.unauthenticate.SimpleAccessDeniedHandler;
 import hello.configuration.unauthenticate.SimpleAuthenticationEntryPoint;
 import hello.dao.PermissionMapper;
@@ -52,6 +54,11 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     private AjaxSessionInformationExpiredStrategy ajaxSessionInformationExpiredStrategy;
     @Inject
     private PermissionMapper permissionMapper;
+    @Inject
+    private CustomAuthenticationSuccessHandler successHandler;
+    @Inject
+    private CustomAuthenticationFailHandler failHandler;
+
     //    @Inject
 //    private DataSource dataSource;
 //
@@ -66,11 +73,12 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 //
     private final String[] ignoredURI = {
             "/index.html", "/error/**", "/static/**", // 静态资源
-            "/auth/**",
+            "/", "/auth/**",
     };
 
     @Override
     public void configure(WebSecurity web) throws Exception {
+        // 避免自定义过滤器交给spring，否则失效
         web.ignoring().antMatchers(ignoredURI);
 
     }
@@ -78,36 +86,35 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         // csrf默认是开启的，会导致访问403，需要先关闭，一种跨站请求伪造，对post有效
-        http
-                .csrf().disable().cors();
-        http
+        http.csrf().disable()
+                .formLogin()
+                .loginPage("/auth/login")
+                .loginProcessingUrl("/login")
+                .and()
                 // 授权请求，通配符匹配路径，允许匹配的所有
                 .authorizeRequests()
                 .anyRequest().authenticated()
                 .and()
                 .exceptionHandling()
-                .accessDeniedHandler(new SimpleAccessDeniedHandler()).authenticationEntryPoint(new SimpleAuthenticationEntryPoint());
-        http
+                .accessDeniedHandler(new SimpleAccessDeniedHandler())
+                .authenticationEntryPoint(new SimpleAuthenticationEntryPoint())
+                .and()
                 .sessionManagement()
+                .invalidSessionUrl("/session/invalid")
                 .maximumSessions(1) // 只能一个地方登陆
                 .maxSessionsPreventsLogin(false) // 阻止其他地方登陆
                 .expiredSessionStrategy(ajaxSessionInformationExpiredStrategy) // session失效后的返回
-                .sessionRegistry(sessionRegistry());
-        http
-                .formLogin().loginProcessingUrl("/login")
-                .permitAll()
+                .sessionRegistry(sessionRegistry())
                 .and()
+                .and()
+                .addFilterAt(customUsernamePasswordAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(myFilterSecurityInterceptor(), FilterSecurityInterceptor.class)
                 .logout()
-                .logoutSuccessUrl("/logout")
+                .logoutUrl("/logout")
+                .deleteCookies("JSESSIONID")
                 .invalidateHttpSession(true)
                 .clearAuthentication(true)
                 .permitAll();
-        // 过滤器
-
-        http
-                .addFilterBefore(myFilterSecurityInterceptor(), FilterSecurityInterceptor.class)
-                .addFilterBefore(customUsernamePasswordAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
-
 
     }
 
@@ -118,15 +125,17 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     public CustomUsernamePasswordAuthenticationFilter customUsernamePasswordAuthenticationFilter() throws Exception {
-        CustomUsernamePasswordAuthenticationFilter filter = new CustomUsernamePasswordAuthenticationFilter(userService);
+        CustomUsernamePasswordAuthenticationFilter filter = new CustomUsernamePasswordAuthenticationFilter();
         filter.setAuthenticationManager(authenticationManager());
+        // HttpSecurity中定义总是失效，暂没找到原因
+        filter.setAuthenticationSuccessHandler(successHandler);
+        filter.setAuthenticationFailureHandler(failHandler);
         return filter;
     }
 
     /*
      * 认证管理器
      */
-    @Bean
     @Override
     protected AuthenticationManager authenticationManager() throws Exception {
         return super.authenticationManager();
@@ -136,11 +145,11 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     public void configure(AuthenticationManagerBuilder auth) throws Exception {
         // 加入自定义的安全认证
+        auth.authenticationProvider(authenticationProvider());
+
         auth
                 .userDetailsService(userService)
-                .passwordEncoder(bCryptPasswordEncoder())
-                .and()
-                .authenticationProvider(authenticationProvider());
+                .passwordEncoder(bCryptPasswordEncoder());
     }
 
     // 对存储到数据库的密码进行加密
@@ -162,7 +171,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Bean
     public AuthenticationProvider authenticationProvider() {
-        AuthenticationProvider authenticationProvider = new CustomAuthenticationProvider();
-        return authenticationProvider;
+        return new CustomAuthenticationProvider();
     }
+
 }

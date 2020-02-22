@@ -1,4 +1,4 @@
-package hello.configuration.interceptor;
+package hello.configuration.security;
 
 import hello.dao.PermissionMapper;
 import hello.entity.user.Permission;
@@ -9,6 +9,7 @@ import org.springframework.security.web.FilterInvocation;
 import org.springframework.security.web.access.intercept.FilterInvocationSecurityMetadataSource;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -56,7 +57,7 @@ public class MyInvocationSecurityMetadataSourceService implements FilterInvocati
     // Spring容器启动时自动调用, 一般把所有请求与权限的对应关系也要在这个方法里初始化, 保存在一个属性变量里
     @Override
     public Collection<ConfigAttribute> getAllConfigAttributes() {
-        return null;
+        return new ArrayList<>();
     }
 
     // 指示该类是否能够为指定的方法调用或Web请求提供

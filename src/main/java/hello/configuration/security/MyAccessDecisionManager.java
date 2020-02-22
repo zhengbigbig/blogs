@@ -1,6 +1,5 @@
-package hello.configuration.interceptor;
+package hello.configuration.security;
 
-import hello.utils.exception.AnonymousUserException;
 import hello.utils.exception.ApiRRException;
 import hello.utils.requests.RequestUtils;
 import lombok.extern.java.Log;

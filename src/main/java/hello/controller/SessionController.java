@@ -3,6 +3,7 @@ package hello.controller;
 import hello.entity.result.NormalResult;
 import hello.entity.result.ObjectResult;
 import hello.service.SessionService;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
@@ -29,4 +30,10 @@ public class SessionController {
         return sessionService.invalidateSession(username);
     }
 
+    @RequestMapping("/invalid")
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    @ResponseBody
+    public String invalid() {
+        return "Session 已过期，请重新登录";
+    }
 }

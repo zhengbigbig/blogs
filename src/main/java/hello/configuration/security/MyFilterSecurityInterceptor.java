@@ -1,4 +1,4 @@
-package hello.configuration.interceptor;
+package hello.configuration.security;
 
 import com.google.common.collect.ImmutableMap;
 import hello.dao.PermissionMapper;
@@ -11,13 +11,10 @@ import org.springframework.security.access.intercept.AbstractSecurityInterceptor
 import org.springframework.security.access.intercept.InterceptorStatusToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.FilterInvocation;
 
 import javax.servlet.*;
 import java.io.IOException;
-import java.util.Collections;
 
 // AbstractSecurityInterceptor 是一个实现了对受保护对象的访问进行拦截的抽象类
 /* beforeInvocation()方法实现了对访问受保护对象的权限校验
@@ -75,7 +72,7 @@ public class MyFilterSecurityInterceptor extends AbstractSecurityInterceptor imp
             }
 
         } catch (ApiRRException e) {
-            ImmutableMap<String, String> message = ImmutableMap.of(
+            ImmutableMap<String, Object> message = ImmutableMap.of(
                     "uri", fi.getRequest().getRequestURI(),
                     "msg", e.getMsg(),
                     "status", "error"
@@ -83,10 +80,11 @@ public class MyFilterSecurityInterceptor extends AbstractSecurityInterceptor imp
             RequestUtils.sendMessageToResponse(
                     fi.getResponse(),
                     message,
-                    e.getError()
+                    e.getError(),
+                    "无权限访问"
             );
         } catch (AnonymousUserException e) {
-            SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken("ano","ano"));
+            SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken("ano", "ano"));
             fi.getChain().doFilter(fi.getRequest(), fi.getResponse());
         }
 

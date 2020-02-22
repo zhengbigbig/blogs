@@ -1,39 +1,28 @@
-package hello.configuration.session;
+package hello.configuration.authentication;
 
-import com.alibaba.fastjson.JSONObject;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import hello.service.UserService;
-import hello.utils.requests.RequestUtils;
-import hello.utils.requests.RequestWrapper;
-import lombok.SneakyThrows;
-import lombok.extern.java.Log;
-import org.apache.commons.io.IOUtils;
+import hello.configuration.authentication.token.EmailLoginAuthenticationToken;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.Charset;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
-@Log
 public class CustomUsernamePasswordAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
     private ThreadLocal<Map<String, String>> threadLocal = new ThreadLocal<>();
-
-    private UserDetailsService userService;
-
-    public CustomUsernamePasswordAuthenticationFilter(UserDetailsService userService) {
-        this.userService = userService;
-    }
 
     /**
      * @param :args
@@ -53,10 +42,9 @@ public class CustomUsernamePasswordAuthenticationFilter extends UsernamePassword
         String password = this.obtainPassword(request);
         String username = this.obtainUsername(request);
 
-        UsernamePasswordAuthenticationToken authRequest = new UsernamePasswordAuthenticationToken(
-                username, password);
-        this.setDetails(request, authRequest);
-
+        EmailLoginAuthenticationToken authRequest = new EmailLoginAuthenticationToken(username, password);
+        authRequest.setSession(request.getSession().getId());
+        setDetails(request, authRequest);
         return this.getAuthenticationManager().authenticate(authRequest);
 
     }
@@ -70,7 +58,7 @@ public class CustomUsernamePasswordAuthenticationFilter extends UsernamePassword
      */
     @Override
     protected String obtainPassword(HttpServletRequest request) {
-        String password = this.getBodyParams(request).get(super.SPRING_SECURITY_FORM_PASSWORD_KEY);
+        String password = this.getBodyParams(request).get(SPRING_SECURITY_FORM_PASSWORD_KEY);
         if (!StringUtils.isEmpty(password)) {
             return password;
         }

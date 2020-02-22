@@ -19,11 +19,11 @@ public class SimpleAuthenticationEntryPoint implements AuthenticationEntryPoint 
     }
 
     public static void sendMessageToResponseWhenReject(HttpServletRequest request, HttpServletResponse response, String msg, int scUnauthorized) throws IOException {
-        ImmutableMap<String, String> message = ImmutableMap.of(
+        ImmutableMap<String, Object> message = ImmutableMap.of(
                 "uri", request.getRequestURI(),
                 "msg", msg,
                 "status", "error"
         );
-        RequestUtils.sendMessageToResponse(response, message, scUnauthorized);
+        RequestUtils.sendMessageToResponse(response, message, scUnauthorized,"无权限");
     }
 }
