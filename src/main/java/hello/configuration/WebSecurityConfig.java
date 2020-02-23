@@ -10,6 +10,7 @@ import hello.configuration.authentication.interceptor.MyFilterSecurityIntercepto
 import hello.configuration.authentication.provider.CustomEmailAuthenticationProvider;
 import hello.configuration.authentication.strategy.AjaxSessionInformationExpiredStrategy;
 import hello.dao.PermissionMapper;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -62,6 +63,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     private CustomAuthenticationFailHandler failHandler;
     @Inject
     private CustomEmailAuthenticationProvider customEmailAuthenticationProvider;
+    @Inject
+    private SessionRegistry sessionRegistry;
 
     //    @Inject
 //    private DataSource dataSource;
@@ -77,7 +80,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 //
     private final String[] ignoredURI = {
             "/index.html", "/error/**", "/static/**", // 静态资源
-            "/", "/auth/**"
+            "/",
     };
 
     @Override
@@ -93,27 +96,29 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         http
                 .csrf().disable();
         http
-                .authorizeRequests().anyRequest().authenticated()
+                .authorizeRequests()
+                .addFilterBefore(myFilterSecurityInterceptor(), FilterSecurityInterceptor.class)
+//                .addFilterBefore(customUsernamePasswordAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+
+                .antMatchers("/auth/**", "/auth/login").permitAll()
+                .and().formLogin().loginProcessingUrl("/auth/login")
+                .successHandler(successHandler).failureHandler(failHandler)
+                .and()
+                .anyRequest().authenticated()
                 .and().exceptionHandling()
                 .accessDeniedHandler(new SimpleAccessDeniedHandler())
                 .authenticationEntryPoint(new SimpleAuthenticationEntryPoint())
                 .and()
-                .formLogin()
-                .loginProcessingUrl("/login")
-                .successHandler(successHandler)
-                .failureHandler(failHandler)
-                .permitAll()
+
                 .and()
                 .sessionManagement()
 //                .invalidSessionUrl("/session/invalid")
                 .maximumSessions(1) // 只能一个地方登陆
                 .maxSessionsPreventsLogin(false) // 阻止其他地方登陆
                 .expiredSessionStrategy(ajaxSessionInformationExpiredStrategy) // session失效后的返回
-                .sessionRegistry(sessionRegistry())
+                .sessionRegistry(sessionRegistry)
                 .and()
                 .and()
-                .addFilterBefore(customUsernamePasswordAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(myFilterSecurityInterceptor(), FilterSecurityInterceptor.class)
                 .authorizeRequests()
                 .and()
                 .logout()
@@ -133,6 +138,12 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         return myFilterSecurityInterceptor;
     }
 
+    /**
+     * 注册过滤器配置
+     *
+     * @return usernamepassword filter
+     * @throws Exception
+     */
     @Bean
     public CustomUsernamePasswordAuthenticationFilter customUsernamePasswordAuthenticationFilter() throws Exception {
         CustomUsernamePasswordAuthenticationFilter filter = new CustomUsernamePasswordAuthenticationFilter();
@@ -145,24 +156,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         return filter;
     }
 
-    /*
-     * 认证管理器
-     */
-//    @Bean
-//    public AuthenticationManager customAuthenticationManager() throws Exception {
-//        return authenticationManager();
-//    }
-
-//    // 全局的加密服务
-//    @Override
-//    public void configure(AuthenticationManagerBuilder auth) throws Exception {
-//        // 加入自定义的安全认证
-////        auth.authenticationProvider(authenticationProvider());
-//
-//        auth
-//                .userDetailsService(userService)
-//                .passwordEncoder(bCryptPasswordEncoder());
-//    }
 
     // 对存储到数据库的密码进行加密
     @Bean
@@ -181,8 +174,4 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         return new HttpSessionEventPublisher();
     }
 
-//    @Bean
-//    public AuthenticationProvider authenticationProvider() {
-//        return new CustomEmailAuthenticationProvider();
-//    }
 }

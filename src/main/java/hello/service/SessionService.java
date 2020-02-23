@@ -62,7 +62,6 @@ public class SessionService {
                 .filter(sessionInformation -> !sessionInformation.isExpired())
                 .map(sessionInformation -> {
                     UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) sessionInformation.getPrincipal();
-                    SecurityContextHolder.getContext().setAuthentication(token);
                     return (User) token.getPrincipal();
                 });
 

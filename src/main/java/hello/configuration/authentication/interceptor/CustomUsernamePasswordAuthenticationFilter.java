@@ -25,7 +25,6 @@ import java.util.Map;
 @Log
 public class CustomUsernamePasswordAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
     private ThreadLocal<Map<String, String>> threadLocal = new ThreadLocal<>();
-
     public CustomUsernamePasswordAuthenticationFilter() {
         super(new AntPathRequestMatcher("/login", "POST"));
     }
@@ -51,6 +50,7 @@ public class CustomUsernamePasswordAuthenticationFilter extends AbstractAuthenti
         }
         UsernamePasswordAuthenticationToken authRequest = new UsernamePasswordAuthenticationToken(username, password);
 //        authRequest.setSession(request.getSession().getId());
+
         authRequest.setDetails(authenticationDetailsSource.buildDetails(request));
         return this.getAuthenticationManager().authenticate(authRequest);
     }

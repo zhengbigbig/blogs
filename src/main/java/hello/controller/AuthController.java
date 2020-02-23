@@ -10,8 +10,10 @@ import hello.service.UserService;
 import hello.utils.ValidateUtils;
 import lombok.extern.java.Log;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
@@ -28,21 +30,31 @@ public class AuthController {
     private final UserService userService;
     private final AuthService authService;
     private final SessionService sessionService;
+    private final SessionRegistry sessionRegistry;
 
     @Inject
-    public AuthController(UserService userService, AuthService authService, SessionService sessionService) {
+    public AuthController(UserService userService, AuthService authService, SessionService sessionService, SessionRegistry sessionRegistry) {
         this.userService = userService;
         this.authService = authService;
         this.sessionService = sessionService;
+        this.sessionRegistry = sessionRegistry;
     }
 
     @GetMapping("/auth")
     @ResponseBody //
     public ObjectResult auth(HttpServletRequest request) {
         // 这里没有接入数据库，保存的信息是在内存中的，因此暂时读取不到，返回的是anonymousUser 匿名用户
+        Optional.ofNullable(sessionRegistry.getSessionInformation(request.getSession().getId()))
+                .filter(sessionInformation -> !sessionInformation.isExpired())
+                .map(sessionInformation -> {
+                    UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) sessionInformation.getPrincipal();
+                    SecurityContextHolder.getContext().setAuthentication(token);
+                    return (User) token.getPrincipal();
+                });
         return sessionService.loginSuccessThenSetContext(request)
                 .map(user -> ObjectResult.success("获取成功", user))
                 .orElse(ObjectResult.failure("别伪造session来骗人好吗"));
+//        return null;
     }
 
     @GetMapping("/auth/currentUser")
@@ -112,7 +124,7 @@ public class AuthController {
     @GetMapping("/auth/logout")
     @ResponseBody
     public ObjectResult logout() {
-        SecurityContextHolder.clearContext();
+//        SecurityContextHolder.clearContext();
         return authService.getCurrentUser()
                 .map(user -> ObjectResult.success("注销成功", false))
                 .orElse(ObjectResult.failure("未登录！"));
