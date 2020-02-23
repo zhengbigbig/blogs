@@ -7,22 +7,46 @@ import org.springframework.security.access.ConfigAttribute;
 import org.springframework.security.access.SecurityConfig;
 import org.springframework.security.web.FilterInvocation;
 import org.springframework.security.web.access.intercept.FilterInvocationSecurityMetadataSource;
+import org.springframework.util.AntPathMatcher;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 // 用来储存请求与权限的对应关系
 @Log
 public class MyInvocationSecurityMetadataSourceService implements FilterInvocationSecurityMetadataSource {
     private PermissionMapper permissionMapper;
+    private final AntPathMatcher antPathMatcher = new AntPathMatcher();
+    private HashMap<String, Collection<ConfigAttribute>> map = null;
 
     public MyInvocationSecurityMetadataSourceService(PermissionMapper permissionMapper) {
         this.permissionMapper = permissionMapper;
     }
 
+    /*
+     * 加载权限表中所有权限
+     */
+    public void loadAllPermissionResource() {
+        map = new HashMap<>(16);
+        List<Permission> permissions = permissionMapper.findAllPermission();
+        // 某个资源 可以被哪些角色访问,用权限的getUrl() 作为map的key，用ConfigAttribute的集合作为 value，
+        for (Permission permission : permissions) {
+            String url = permission.getUrl();
+            String name = permission.getName();
+            ConfigAttribute role = new SecurityConfig(name);
+            /* 此处只添加了名字，其实还可以添加更多权限的信息，
+             * 例如请求方法到ConfigAttribute的集合中去。
+             * 此处添加的信息将会作为MyAccessDecisionManager类的decide的第三个参数。
+             */
+            if (map.containsKey(url)) {
+                map.get(url).add(role);
+            } else {
+                List<ConfigAttribute> list = new ArrayList<>();
+                list.add(role);
+                map.put(url, list);
+            }
+        }
+    }
 
     /*
     当接收到一个http请求时, filterSecurityInterceptor会调用的方法.
@@ -34,15 +58,16 @@ public class MyInvocationSecurityMetadataSourceService implements FilterInvocati
     @Override
     public Collection<ConfigAttribute> getAttributes(Object object) throws IllegalArgumentException {
 
+        if (map == null) {
+            loadAllPermissionResource();
+        }
+
         HttpServletRequest request = ((FilterInvocation) object).getRequest();
         String url = request.getRequestURI();
-        Collection<ConfigAttribute> collection = new LinkedList<>();
 
-        List<Permission> permissions = permissionMapper.findPermissionsByUrl(url);
-        for (Permission p : permissions) {
-            String name;
-            if ((name = p.getName()) != null) {
-                collection.add(new SecurityConfig(name));
+        for(Map.Entry<String,String> entry:urlRoleMap.entrySet()){
+            if(antPathMatcher.match(entry.getKey(),url)){
+                return SecurityConfig.createList(entry.getValue());
             }
         }
 
