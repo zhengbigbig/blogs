@@ -9,12 +9,14 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import javax.inject.Inject;
 import java.util.Collection;
+import java.util.Optional;
 
 @Log
 public class CustomAuthenticationProvider implements AuthenticationProvider {
@@ -52,8 +54,9 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
         //获取用户权限信息
         Collection<? extends GrantedAuthority> authorities = user.getAuthorities();
         try {
-            EmailLoginAuthenticationToken checkedAuthentication = new EmailLoginAuthenticationToken(user, bCryptPasswordEncoder.encode(password), authorities);
+            EmailLoginAuthenticationToken checkedAuthentication = new EmailLoginAuthenticationToken(user, password, authorities);
             checkedAuthentication.setSession(token.getSession());
+            log.info("provider:" + Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication().getName()).orElse(null));
             return checkedAuthentication;
         } catch (Exception e) {
             throw new BadCredentialsException("认证不通过");

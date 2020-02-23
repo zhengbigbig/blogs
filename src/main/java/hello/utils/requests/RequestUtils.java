@@ -96,11 +96,10 @@ public class RequestUtils {
      * TODO 从请求中获取Body
      *
      * @param request
-     * @param want
      * @return
      * @throws IOException
      */
-    public static Map<String, Object> getBodyFromRequest(HttpServletRequest request, String want) throws IOException {
+    public static Map<String, Object> getBodyFromRequest(HttpServletRequest request) throws IOException {
         RequestWrapper requestWrapper = new RequestWrapper(request);
         String bodyParam = IOUtils.toString(requestWrapper.getInputStream(), Charset.defaultCharset());
         return JSONObject.parseObject(bodyParam);

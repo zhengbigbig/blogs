@@ -5,6 +5,7 @@ import hello.entity.result.ObjectResult;
 import hello.entity.result.Result;
 import hello.entity.user.User;
 import hello.service.AuthService;
+import hello.service.SessionService;
 import hello.service.UserService;
 import hello.utils.ValidateUtils;
 import lombok.extern.java.Log;
@@ -13,6 +14,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 
@@ -22,16 +25,27 @@ import java.util.Optional;
 public class AuthController {
     private final UserService userService;
     private final AuthService authService;
+    private final SessionService sessionService;
 
     @Inject
-    public AuthController(UserService userService, AuthService authService) {
+    public AuthController(UserService userService, AuthService authService, SessionService sessionService) {
         this.userService = userService;
         this.authService = authService;
+        this.sessionService = sessionService;
     }
 
     @GetMapping("/auth")
+    @ResponseBody //
+    public ObjectResult auth(HttpServletRequest request) {
+        // 这里没有接入数据库，保存的信息是在内存中的，因此暂时读取不到，返回的是anonymousUser 匿名用户
+        return sessionService.loginSuccessThenSetContext(request)
+                .map(user -> ObjectResult.success("获取成功", user))
+                .orElse(ObjectResult.failure("别伪造session来骗人好吗"));
+    }
+
+    @GetMapping("/auth/currentUser")
     @ResponseBody // 将返回值限定在body里面
-    public Object auth() {
+    public Object currentUser() {
         // 这里没有接入数据库，保存的信息是在内存中的，因此暂时读取不到，返回的是anonymousUser 匿名用户
         return authService.getCurrentUser()
                 .map(user -> ObjectResult.success("获取成功", user))
@@ -92,7 +106,7 @@ public class AuthController {
         return null;
     }
 
-    @GetMapping("/logout")
+    @GetMapping("/auth/logout")
     @ResponseBody
     public ObjectResult logout() {
         SecurityContextHolder.clearContext();

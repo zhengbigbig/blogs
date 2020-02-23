@@ -1,6 +1,7 @@
-package hello.configuration.security;
+package hello.configuration.authentication.interceptor;
 
 import com.google.common.collect.ImmutableMap;
+import hello.configuration.authentication.datasource.MyInvocationSecurityMetadataSourceService;
 import hello.dao.PermissionMapper;
 import hello.utils.exception.AnonymousUserException;
 import hello.utils.exception.ApiRRException;
@@ -31,7 +32,6 @@ import java.io.IOException;
 
 public class MyFilterSecurityInterceptor extends AbstractSecurityInterceptor implements Filter {
 
-    private static final String FILTER_APPLIED = "__spring_security_demoFilter_filterApplied";
     private PermissionMapper permissionMapper;
 
     public MyFilterSecurityInterceptor(PermissionMapper permissionMapper) {
@@ -45,17 +45,10 @@ public class MyFilterSecurityInterceptor extends AbstractSecurityInterceptor imp
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
-//        filterConfig.getFilterName().
     }
 
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
-//        if (servletRequest.getAttribute(FILTER_APPLIED) != null) {
-//            FilterInvocation fi = new FilterInvocation(servletRequest, servletResponse, filterChain);
-//            invoke(fi);
-//            return;
-//        }
-//        servletRequest.setAttribute(FILTER_APPLIED, true);
         FilterInvocation fi = new FilterInvocation(servletRequest, servletResponse, filterChain);
         invoke(fi);
     }

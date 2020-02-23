@@ -1,4 +1,4 @@
-package hello.configuration.unauthenticate;
+package hello.configuration.authentication.handler;
 
 import com.google.common.collect.ImmutableMap;
 import hello.utils.requests.RequestUtils;

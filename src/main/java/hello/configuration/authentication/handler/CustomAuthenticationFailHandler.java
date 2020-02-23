@@ -4,9 +4,7 @@ package hello.configuration.authentication.handler;
 import com.google.common.collect.ImmutableMap;
 import hello.utils.requests.RequestUtils;
 import lombok.extern.java.Log;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
 import org.springframework.stereotype.Service;
 
@@ -39,6 +37,6 @@ public class CustomAuthenticationFailHandler extends SimpleUrlAuthenticationFail
                 "msg", exception.getMessage(),
                 "status", "error"
         );
-        RequestUtils.sendMessageToResponse(response, message, 401,"login fail handler");
+        RequestUtils.sendMessageToResponse(response, message, 401, "login fail handler");
     }
 }

@@ -1,4 +1,4 @@
-package hello.configuration.security;
+package hello.configuration.authentication.datasource;
 
 import hello.utils.exception.ApiRRException;
 import hello.utils.requests.RequestUtils;

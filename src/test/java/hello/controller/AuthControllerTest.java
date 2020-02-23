@@ -2,7 +2,9 @@ package hello.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
+import hello.configuration.authentication.AuthenticationFacade;
 import hello.service.AuthService;
+import hello.service.SessionService;
 import hello.service.UserService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,17 +46,22 @@ class AuthControllerTest {
     @Mock
     private SessionRegistry sessionRegistry;
     @Mock
+    private SessionService sessionService;
+    @Mock
     private AuthenticationManager authenticationManager;
     @Mock
     private SecurityContext context;
     @Mock
     private Authentication auth;
+    @Mock
+    private AuthenticationFacade authenticationFacade;
 
     // 对每个测试构建
     @BeforeEach
     void setUp() {
-        AuthService authService = new AuthService(userService);
-        mvc = MockMvcBuilders.standaloneSetup(new AuthController(userService, authService)).build();
+
+        AuthService authService = new AuthService(userService, authenticationFacade);
+        mvc = MockMvcBuilders.standaloneSetup(new AuthController(userService, authService, sessionService)).build();
     }
 
     //

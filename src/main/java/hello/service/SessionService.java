@@ -1,15 +1,20 @@
 package hello.service;
 
+import hello.configuration.authentication.token.EmailLoginAuthenticationToken;
 import hello.entity.result.NormalResult;
 import hello.entity.result.ObjectResult;
 import hello.entity.user.User;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.session.SessionInformation;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -48,6 +53,18 @@ public class SessionService {
             return ObjectResult.success("获取成功", usersOnline);
         }
         return ObjectResult.failure("当前无用户在线");
+
+    }
+
+    public Optional<User> loginSuccessThenSetContext(HttpServletRequest request) {
+        // TODO avoid fake expired session to login this
+        return Optional.ofNullable(sessionRegistry.getSessionInformation(request.getSession().getId()))
+                .filter(sessionInformation -> !sessionInformation.isExpired())
+                .map(sessionInformation -> {
+                    UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) sessionInformation.getPrincipal();
+                    SecurityContextHolder.getContext().setAuthentication(token);
+                    return (User) token.getPrincipal();
+                });
 
     }
 }

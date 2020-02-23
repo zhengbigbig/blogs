@@ -1,19 +1,20 @@
 package hello.configuration;
 
-import hello.configuration.authentication.provider.CustomAuthenticationProvider;
+import hello.configuration.authentication.datasource.MyAccessDecisionManager;
 import hello.configuration.authentication.handler.CustomAuthenticationFailHandler;
 import hello.configuration.authentication.handler.CustomAuthenticationSuccessHandler;
-import hello.configuration.security.MyAccessDecisionManager;
-import hello.configuration.security.MyFilterSecurityInterceptor;
-import hello.configuration.authentication.session.AjaxSessionInformationExpiredStrategy;
-import hello.configuration.authentication.CustomUsernamePasswordAuthenticationFilter;
-import hello.configuration.unauthenticate.SimpleAccessDeniedHandler;
-import hello.configuration.unauthenticate.SimpleAuthenticationEntryPoint;
+import hello.configuration.authentication.handler.SimpleAccessDeniedHandler;
+import hello.configuration.authentication.handler.SimpleAuthenticationEntryPoint;
+import hello.configuration.authentication.interceptor.CustomUsernamePasswordAuthenticationFilter;
+import hello.configuration.authentication.interceptor.MyFilterSecurityInterceptor;
+import hello.configuration.authentication.provider.CustomAuthenticationProvider;
+import hello.configuration.authentication.strategy.AjaxSessionInformationExpiredStrategy;
 import hello.dao.PermissionMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -29,6 +30,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.security.web.session.HttpSessionEventPublisher;
 
 import javax.inject.Inject;
+import java.util.Collections;
 
 @Configuration
 @EnableWebSecurity
@@ -73,7 +75,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 //
     private final String[] ignoredURI = {
             "/index.html", "/error/**", "/static/**", // 静态资源
-            "/", "/auth/**",
+            "/", "/auth/**"
     };
 
     @Override
@@ -86,35 +88,38 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         // csrf默认是开启的，会导致访问403，需要先关闭，一种跨站请求伪造，对post有效
-        http.csrf().disable()
-                .formLogin()
-                .loginPage("/auth/login")
-                .loginProcessingUrl("/login")
-                .and()
-                // 授权请求，通配符匹配路径，允许匹配的所有
-                .authorizeRequests()
-                .anyRequest().authenticated()
-                .and()
-                .exceptionHandling()
+        http
+                .csrf().disable();
+        http
+                .authorizeRequests().anyRequest().authenticated()
+                .and().exceptionHandling()
                 .accessDeniedHandler(new SimpleAccessDeniedHandler())
                 .authenticationEntryPoint(new SimpleAuthenticationEntryPoint())
                 .and()
+                .formLogin()
+                .loginProcessingUrl("/login")
+                .successHandler(successHandler)
+                .failureHandler(failHandler)
+                .permitAll()
+                .and()
                 .sessionManagement()
-                .invalidSessionUrl("/session/invalid")
+//                .invalidSessionUrl("/session/invalid")
                 .maximumSessions(1) // 只能一个地方登陆
                 .maxSessionsPreventsLogin(false) // 阻止其他地方登陆
                 .expiredSessionStrategy(ajaxSessionInformationExpiredStrategy) // session失效后的返回
                 .sessionRegistry(sessionRegistry())
                 .and()
                 .and()
-                .addFilterAt(customUsernamePasswordAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(customUsernamePasswordAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(myFilterSecurityInterceptor(), FilterSecurityInterceptor.class)
                 .logout()
                 .logoutUrl("/logout")
+                .logoutSuccessUrl("/auth/logout")
+                .permitAll()
                 .deleteCookies("JSESSIONID")
                 .invalidateHttpSession(true)
-                .clearAuthentication(true)
-                .permitAll();
+                .clearAuthentication(true);
+
 
     }
 
@@ -124,9 +129,12 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         return myFilterSecurityInterceptor;
     }
 
+    @Bean
     public CustomUsernamePasswordAuthenticationFilter customUsernamePasswordAuthenticationFilter() throws Exception {
         CustomUsernamePasswordAuthenticationFilter filter = new CustomUsernamePasswordAuthenticationFilter();
-        filter.setAuthenticationManager(authenticationManager());
+        ProviderManager providerManager =
+                new ProviderManager(Collections.singletonList(authenticationProvider()));
+        filter.setAuthenticationManager(providerManager);
         // HttpSecurity中定义总是失效，暂没找到原因
         filter.setAuthenticationSuccessHandler(successHandler);
         filter.setAuthenticationFailureHandler(failHandler);
@@ -136,16 +144,16 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     /*
      * 认证管理器
      */
-    @Override
-    protected AuthenticationManager authenticationManager() throws Exception {
-        return super.authenticationManager();
+    @Bean
+    public AuthenticationManager customAuthenticationManager() throws Exception {
+        return authenticationManager();
     }
 
     // 全局的加密服务
     @Override
     public void configure(AuthenticationManagerBuilder auth) throws Exception {
         // 加入自定义的安全认证
-        auth.authenticationProvider(authenticationProvider());
+//        auth.authenticationProvider(authenticationProvider());
 
         auth
                 .userDetailsService(userService)
@@ -173,5 +181,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     public AuthenticationProvider authenticationProvider() {
         return new CustomAuthenticationProvider();
     }
+
 
 }

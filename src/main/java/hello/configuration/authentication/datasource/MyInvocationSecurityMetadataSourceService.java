@@ -1,4 +1,4 @@
-package hello.configuration.security;
+package hello.configuration.authentication.datasource;
 
 import hello.dao.PermissionMapper;
 import hello.entity.user.Permission;

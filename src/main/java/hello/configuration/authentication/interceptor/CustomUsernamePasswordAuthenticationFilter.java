@@ -1,28 +1,33 @@
-package hello.configuration.authentication;
+package hello.configuration.authentication.interceptor;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hello.configuration.authentication.token.EmailLoginAuthenticationToken;
+import lombok.extern.java.Log;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.authentication.AuthenticationServiceException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.session.SessionRegistry;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public class CustomUsernamePasswordAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
+// 重写，便于自定义接受的参数
+@Log
+public class CustomUsernamePasswordAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
     private ThreadLocal<Map<String, String>> threadLocal = new ThreadLocal<>();
+
+    public CustomUsernamePasswordAuthenticationFilter() {
+        super(new AntPathRequestMatcher("/login", "POST"));
+    }
 
     /**
      * @param :args
@@ -33,53 +38,20 @@ public class CustomUsernamePasswordAuthenticationFilter extends UsernamePassword
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request,
                                                 HttpServletResponse response) throws AuthenticationException {
-
-        if (!request.getMethod().equals("POST")) {
-            throw new AuthenticationServiceException(
-                    "Authentication method not supported: "
-                            + request.getMethod());
+        String password = "";
+        String username = "";
+        try {
+            Map<String, String> params = getBodyParams(request);
+            username = params.get("username");
+            password = params.get("password");
+        } catch (Exception e) {
+            log.info("登录传参出错");
+            throw new InternalAuthenticationServiceException("Failed to get the your parameter");
         }
-        String password = this.obtainPassword(request);
-        String username = this.obtainUsername(request);
-
         EmailLoginAuthenticationToken authRequest = new EmailLoginAuthenticationToken(username, password);
         authRequest.setSession(request.getSession().getId());
-        setDetails(request, authRequest);
+        authRequest.setDetails(authenticationDetailsSource.buildDetails(request));
         return this.getAuthenticationManager().authenticate(authRequest);
-
-    }
-
-
-    /**
-     * @param :args
-     * @return
-     * @throws Exception
-     * @Description:获取密码
-     */
-    @Override
-    protected String obtainPassword(HttpServletRequest request) {
-        String password = this.getBodyParams(request).get(SPRING_SECURITY_FORM_PASSWORD_KEY);
-        if (!StringUtils.isEmpty(password)) {
-            return password;
-        }
-        return super.obtainPassword(request);
-
-    }
-
-    /**
-     * @param :args
-     * @return
-     * @throws Exception
-     * @Description:获取用户名
-     */
-    @Override
-    protected String obtainUsername(HttpServletRequest request) {
-        String username = this.getBodyParams(request).get(super.SPRING_SECURITY_FORM_USERNAME_KEY);
-        if (!StringUtils.isEmpty(username)) {
-            return username;
-        }
-        return super.obtainUsername(request);
-
     }
 
     /**
