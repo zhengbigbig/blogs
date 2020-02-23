@@ -28,22 +28,18 @@ public class MyAccessDecisionManager implements AccessDecisionManager {
      * @throws AccessDeniedException
      * @throws InsufficientAuthenticationException 必须在登录后才能正常决策
      */
+    // 想让其放行 可设置 ROLE_ANONYMOUS
     @Override
     public void decide(Authentication authentication, Object object, Collection<ConfigAttribute> configAttributes) throws AccessDeniedException, InsufficientAuthenticationException {
-        HttpServletRequest httpRequest = ((FilterInvocation) object).getHttpRequest();
-        if(RequestUtils.isSecurityAccessDecisionToIgnore((httpRequest))){
-//            throw new AnonymousUserException("正在登录，临时放行");
-            return;
-        }
         Iterator<ConfigAttribute> iterator = configAttributes.iterator();
         while (iterator.hasNext()) {
             ConfigAttribute ca = iterator.next();
             //当前请求需要无权限url
             String needRole = ca.getAttribute();
-            if ("ROLE_ANONYMOUS".equals(needRole)) {
-                throw new ApiRRException("请先登录!", 403);
-            }
-            //当前用户所具有的权限
+//            if ("ROLE_ANONYMOUS".equals(needRole)) {
+//                throw new ApiRRException("请先登录!", 403);
+//            }
+            //当前用户所具有的权限,放行
             Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
             for (GrantedAuthority authority : authorities) {
                 if (authority.getAuthority().equals(needRole)) {

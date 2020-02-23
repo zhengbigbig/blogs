@@ -1,22 +1,20 @@
 package hello.configuration;
 
 import hello.configuration.authentication.datasource.MyAccessDecisionManager;
+import hello.configuration.authentication.datasource.MyInvocationSecurityMetadataSourceService;
 import hello.configuration.authentication.handler.CustomAuthenticationFailHandler;
 import hello.configuration.authentication.handler.CustomAuthenticationSuccessHandler;
 import hello.configuration.authentication.handler.SimpleAccessDeniedHandler;
 import hello.configuration.authentication.handler.SimpleAuthenticationEntryPoint;
 import hello.configuration.authentication.interceptor.CustomUsernamePasswordAuthenticationFilter;
-import hello.configuration.authentication.interceptor.MyFilterSecurityInterceptor;
 import hello.configuration.authentication.provider.CustomEmailAuthenticationProvider;
 import hello.configuration.authentication.strategy.AjaxSessionInformationExpiredStrategy;
 import hello.dao.PermissionMapper;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.access.AccessDecisionManager;
 import org.springframework.security.authentication.ProviderManager;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
@@ -26,6 +24,7 @@ import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.access.intercept.FilterInvocationSecurityMetadataSource;
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
@@ -94,48 +93,58 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         // csrf默认是开启的，会导致访问403，需要先关闭，一种跨站请求伪造，对post有效
         http
-                .csrf().disable();
-        http
                 .authorizeRequests()
-                .addFilterBefore(myFilterSecurityInterceptor(), FilterSecurityInterceptor.class)
-//                .addFilterBefore(customUsernamePasswordAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
-
                 .antMatchers("/auth/**", "/auth/login").permitAll()
                 .and().formLogin().loginProcessingUrl("/auth/login")
                 .successHandler(successHandler).failureHandler(failHandler)
-                .and()
-                .anyRequest().authenticated()
-                .and().exceptionHandling()
-                .accessDeniedHandler(new SimpleAccessDeniedHandler())
-                .authenticationEntryPoint(new SimpleAuthenticationEntryPoint())
-                .and()
-
-                .and()
-                .sessionManagement()
-//                .invalidSessionUrl("/session/invalid")
-                .maximumSessions(1) // 只能一个地方登陆
-                .maxSessionsPreventsLogin(false) // 阻止其他地方登陆
-                .expiredSessionStrategy(ajaxSessionInformationExpiredStrategy) // session失效后的返回
-                .sessionRegistry(sessionRegistry)
-                .and()
-                .and()
-                .authorizeRequests()
-                .and()
-                .logout()
-                .logoutUrl("/logout")
+                .and().logout().logoutUrl("/logout")
                 .logoutSuccessUrl("/auth/logout")
                 .permitAll()
                 .deleteCookies("JSESSIONID")
                 .invalidateHttpSession(true)
-                .clearAuthentication(true);
+                .clearAuthentication(true)
+                .withObjectPostProcessor(new ObjectPostProcessor<FilterSecurityInterceptor>() {
+                    @Override
+                    public <O extends FilterSecurityInterceptor> O postProcess(O fsi) {
+                        fsi.setSecurityMetadataSource(mySecurityMetadataSource());
+                        fsi.setAccessDecisionManager(myAccessDecisionManager());
+                        return fsi;
+                    }
+                })
+                .and().authorizeRequests().anyRequest().authenticated() //对其他接口的权限限制为登录后才能访问
+                .and().csrf().disable()
+                .exceptionHandling()
+                .accessDeniedHandler(new SimpleAccessDeniedHandler())
+                .authenticationEntryPoint(new SimpleAuthenticationEntryPoint())
+                .and().sessionManagement()
+//                .invalidSessionUrl("/session/invalid")
+                .maximumSessions(1) // 只能一个地方登陆
+                .maxSessionsPreventsLogin(false) // 阻止其他地方登陆
+                .expiredSessionStrategy(ajaxSessionInformationExpiredStrategy) /* session失效后的返回*/.sessionRegistry(sessionRegistry)
+                .and()
+                .and()
+                .addFilterBefore(customUsernamePasswordAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
 
     }
 
-    public MyFilterSecurityInterceptor myFilterSecurityInterceptor() {
-        MyFilterSecurityInterceptor myFilterSecurityInterceptor = new MyFilterSecurityInterceptor(permissionMapper);
-        myFilterSecurityInterceptor.setAccessDecisionManager(new MyAccessDecisionManager());
-        return myFilterSecurityInterceptor;
+    /**
+     * 资源管理
+     * @return
+     */
+    @Bean
+    public FilterInvocationSecurityMetadataSource mySecurityMetadataSource() {
+        MyInvocationSecurityMetadataSourceService securityMetadataSource = new MyInvocationSecurityMetadataSourceService(permissionMapper);
+        return securityMetadataSource;
+    }
+
+    /**
+     * 决策放行
+     * @return
+     */
+    @Bean
+    public AccessDecisionManager myAccessDecisionManager() {
+        return new MyAccessDecisionManager();
     }
 
     /**

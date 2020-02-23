@@ -24,6 +24,4 @@ public class AuthService {
                         userService.getUserByUsernameOrEmail(((User) authentication.getPrincipal()).getUsername())
                 );
     }
-
-
 }

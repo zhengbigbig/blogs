@@ -17,7 +17,7 @@ import java.util.*;
 public class MyInvocationSecurityMetadataSourceService implements FilterInvocationSecurityMetadataSource {
     private PermissionMapper permissionMapper;
     private final AntPathMatcher antPathMatcher = new AntPathMatcher();
-    private HashMap<String, Collection<ConfigAttribute>> map = null;
+    private HashMap<String, Collection<ConfigAttribute>> allUrlRoleMap = null;
 
     public MyInvocationSecurityMetadataSourceService(PermissionMapper permissionMapper) {
         this.permissionMapper = permissionMapper;
@@ -27,7 +27,7 @@ public class MyInvocationSecurityMetadataSourceService implements FilterInvocati
      * 加载权限表中所有权限
      */
     public void loadAllPermissionResource() {
-        map = new HashMap<>(16);
+        allUrlRoleMap = new HashMap<>(16);
         List<Permission> permissions = permissionMapper.findAllPermission();
         // 某个资源 可以被哪些角色访问,用权限的getUrl() 作为map的key，用ConfigAttribute的集合作为 value，
         for (Permission permission : permissions) {
@@ -38,12 +38,12 @@ public class MyInvocationSecurityMetadataSourceService implements FilterInvocati
              * 例如请求方法到ConfigAttribute的集合中去。
              * 此处添加的信息将会作为MyAccessDecisionManager类的decide的第三个参数。
              */
-            if (map.containsKey(url)) {
-                map.get(url).add(role);
+            if (allUrlRoleMap.containsKey(url)) {
+                allUrlRoleMap.get(url).add(role);
             } else {
                 List<ConfigAttribute> list = new ArrayList<>();
                 list.add(role);
-                map.put(url, list);
+                allUrlRoleMap.put(url, list);
             }
         }
     }
@@ -58,25 +58,21 @@ public class MyInvocationSecurityMetadataSourceService implements FilterInvocati
     @Override
     public Collection<ConfigAttribute> getAttributes(Object object) throws IllegalArgumentException {
 
-        if (map == null) {
+        if (allUrlRoleMap == null) {
             loadAllPermissionResource();
         }
 
         HttpServletRequest request = ((FilterInvocation) object).getRequest();
         String url = request.getRequestURI();
 
-        for(Map.Entry<String,String> entry:urlRoleMap.entrySet()){
-            if(antPathMatcher.match(entry.getKey(),url)){
-                return SecurityConfig.createList(entry.getValue());
+        for (Map.Entry<String, Collection<ConfigAttribute>> entry : allUrlRoleMap.entrySet()) {
+            if (antPathMatcher.match(entry.getKey(), url)) {
+                return entry.getValue();
             }
         }
 
-        //防止数据库中没有数据，不能进行权限拦截
-        if (collection.size() < 1) {
-            ConfigAttribute configAttribute = new SecurityConfig("ROLE_ANONYMOUS");
-            collection.add(configAttribute);
-        }
-        return collection;
+        // 没有匹配到,默认是要登录才能访问
+        return SecurityConfig.createList("ROLE_LOGIN");
     }
 
     // Spring容器启动时自动调用, 一般把所有请求与权限的对应关系也要在这个方法里初始化, 保存在一个属性变量里
