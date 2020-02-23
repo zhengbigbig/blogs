@@ -10,12 +10,14 @@ import hello.service.UserService;
 import hello.utils.ValidateUtils;
 import lombok.extern.java.Log;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.security.Principal;
 import java.util.Map;
 import java.util.Optional;
 
@@ -45,8 +47,9 @@ public class AuthController {
 
     @GetMapping("/auth/currentUser")
     @ResponseBody // 将返回值限定在body里面
-    public Object currentUser() {
+    public Object currentUser(Principal principal) {
         // 这里没有接入数据库，保存的信息是在内存中的，因此暂时读取不到，返回的是anonymousUser 匿名用户
+        System.out.println(principal);
         return authService.getCurrentUser()
                 .map(user -> ObjectResult.success("获取成功", user))
                 .orElse(ObjectResult.failure("当前未登录"));

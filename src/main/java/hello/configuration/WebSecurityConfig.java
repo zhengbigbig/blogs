@@ -7,7 +7,7 @@ import hello.configuration.authentication.handler.SimpleAccessDeniedHandler;
 import hello.configuration.authentication.handler.SimpleAuthenticationEntryPoint;
 import hello.configuration.authentication.interceptor.CustomUsernamePasswordAuthenticationFilter;
 import hello.configuration.authentication.interceptor.MyFilterSecurityInterceptor;
-import hello.configuration.authentication.provider.CustomAuthenticationProvider;
+import hello.configuration.authentication.provider.CustomEmailAuthenticationProvider;
 import hello.configuration.authentication.strategy.AjaxSessionInformationExpiredStrategy;
 import hello.dao.PermissionMapper;
 import org.springframework.context.annotation.Bean;
@@ -60,6 +60,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     private CustomAuthenticationSuccessHandler successHandler;
     @Inject
     private CustomAuthenticationFailHandler failHandler;
+    @Inject
+    private CustomEmailAuthenticationProvider customEmailAuthenticationProvider;
 
     //    @Inject
 //    private DataSource dataSource;
@@ -112,6 +114,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .addFilterBefore(customUsernamePasswordAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(myFilterSecurityInterceptor(), FilterSecurityInterceptor.class)
+                .authorizeRequests()
+                .and()
                 .logout()
                 .logoutUrl("/logout")
                 .logoutSuccessUrl("/auth/logout")
@@ -133,7 +137,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     public CustomUsernamePasswordAuthenticationFilter customUsernamePasswordAuthenticationFilter() throws Exception {
         CustomUsernamePasswordAuthenticationFilter filter = new CustomUsernamePasswordAuthenticationFilter();
         ProviderManager providerManager =
-                new ProviderManager(Collections.singletonList(authenticationProvider()));
+                new ProviderManager(Collections.singletonList(customEmailAuthenticationProvider));
         filter.setAuthenticationManager(providerManager);
         // HttpSecurity中定义总是失效，暂没找到原因
         filter.setAuthenticationSuccessHandler(successHandler);
@@ -144,21 +148,21 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     /*
      * 认证管理器
      */
-    @Bean
-    public AuthenticationManager customAuthenticationManager() throws Exception {
-        return authenticationManager();
-    }
+//    @Bean
+//    public AuthenticationManager customAuthenticationManager() throws Exception {
+//        return authenticationManager();
+//    }
 
-    // 全局的加密服务
-    @Override
-    public void configure(AuthenticationManagerBuilder auth) throws Exception {
-        // 加入自定义的安全认证
-//        auth.authenticationProvider(authenticationProvider());
-
-        auth
-                .userDetailsService(userService)
-                .passwordEncoder(bCryptPasswordEncoder());
-    }
+//    // 全局的加密服务
+//    @Override
+//    public void configure(AuthenticationManagerBuilder auth) throws Exception {
+//        // 加入自定义的安全认证
+////        auth.authenticationProvider(authenticationProvider());
+//
+//        auth
+//                .userDetailsService(userService)
+//                .passwordEncoder(bCryptPasswordEncoder());
+//    }
 
     // 对存储到数据库的密码进行加密
     @Bean
@@ -177,10 +181,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         return new HttpSessionEventPublisher();
     }
 
-    @Bean
-    public AuthenticationProvider authenticationProvider() {
-        return new CustomAuthenticationProvider();
-    }
-
-
+//    @Bean
+//    public AuthenticationProvider authenticationProvider() {
+//        return new CustomEmailAuthenticationProvider();
+//    }
 }

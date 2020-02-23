@@ -6,6 +6,7 @@ import lombok.extern.java.Log;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
@@ -48,8 +49,8 @@ public class CustomUsernamePasswordAuthenticationFilter extends AbstractAuthenti
             log.info("登录传参出错");
             throw new InternalAuthenticationServiceException("Failed to get the your parameter");
         }
-        EmailLoginAuthenticationToken authRequest = new EmailLoginAuthenticationToken(username, password);
-        authRequest.setSession(request.getSession().getId());
+        UsernamePasswordAuthenticationToken authRequest = new UsernamePasswordAuthenticationToken(username, password);
+//        authRequest.setSession(request.getSession().getId());
         authRequest.setDetails(authenticationDetailsSource.buildDetails(request));
         return this.getAuthenticationManager().authenticate(authRequest);
     }

@@ -11,6 +11,7 @@ import hello.entity.result.Result;
 import hello.entity.user.Permission;
 import hello.entity.user.User;
 import lombok.extern.java.Log;
+import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.session.SessionRegistry;
@@ -61,6 +62,11 @@ public class UserService implements UserDetailsService {
         }
         user.setAuthorities(authorities); //用于登录时 @AuthenticationPrincipal 标签取值
         return user;
+            /*
+      设置用户和角色需要注意：
+      1. commaSeparatedStringToAuthorityList放入角色时需要加前缀ROLE_，而在controller使用时不需要加ROLE_前缀
+      2. 放入的是权限时，不能加ROLE_前缀，hasAuthority与放入的权限名称对应即可
+    */
     }
 
     public void save(String username, String password, String email) {

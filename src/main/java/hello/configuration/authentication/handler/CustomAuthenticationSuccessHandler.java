@@ -44,6 +44,7 @@ public class CustomAuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         sessionRegistry.registerNewSession(request.getSession().getId(), authentication);
         try {
             super.setDefaultTargetUrl("/auth"); // 设置默认登陆成功的跳转地址
+            super.setAlwaysUseDefaultTargetUrl(true);
             super.onAuthenticationSuccess(request, response, authentication);
         } catch (IOException | ServletException e) {
             result.put("uri", request.getRequestURI());
