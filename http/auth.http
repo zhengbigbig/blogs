@@ -1,0 +1,52 @@
+# ------------ 用户注册登录 ----------- #
+
+###发送邮件
+POST http://{{host}}:{{port}}/auth/sendMail
+Content-Type: application/json
+Accept: application/json
+
+{ "username":"{{username}}", "password":"{{password}}", "email":"{{email}}" }
+
+> {% client.global.set("sms", response.body.data.sms.valueOf("sms")) %}
+
+###注册
+POST http://{{host}}:{{port}}/auth/register
+Content-Type: application/json
+Accept: application/json
+
+{ "username":"{{username}}", "password":"{{password}}", "email":"{{email}}", "sms":{{sms}} }
+
+###登录
+POST http://{{host}}:{{port}}/login
+Content-Type: application/json
+Accept: application/json
+
+{ "username":"{{username}}", "password":"{{password}}" }
+
+###退出
+GET http://{{host}}:{{port}}/logout
+Content-Type: application/json
+Accept: application/json
+
+###当前用户
+GET http://{{host}}:{{port}}/auth/currentUser
+Content-Type: application/json
+Accept: application/json
+
+###重置密码
+POST http://{{host}}:{{port}}/auth/resetPw
+Content-Type: application/json
+Accept: application/json
+
+{ "username":"{{username}}", "password":"{{password}}",
+"rePassword":"{{password}}","email":"{{email}}", "sms":{{sms}} }
+###
+#------------- session 管理 ------------ #
+
+###获取所有在线用户/session/getAllOnlineUsers
+GET http://{{host}}:{{port}}/session/getAllOnlineUsers
+Content-Type: application/json
+Accept: application/json
+
+###
+
