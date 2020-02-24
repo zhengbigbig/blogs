@@ -1,6 +1,10 @@
 package hello.entity.result;
 
-public abstract class Result<T> {
+import java.io.Serializable;
+
+public abstract class Result<T> implements Serializable {
+    private static final long serialVersionUID = 448600393858181946L;
+
     public enum ResultStatus {
         OK("ok"),
         FAIL("fail");

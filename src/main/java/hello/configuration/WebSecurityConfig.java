@@ -113,6 +113,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     /**
      * 资源管理,决策放行
+     * @return FilterInvocationSecurityMetadataSource
      */
     @Bean
     public FilterInvocationSecurityMetadataSource mySecurityMetadataSource() {
@@ -124,11 +125,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         return new MyAccessDecisionManager();
     }
 
-    /**
-     * 注册过滤器配置
-     *
-     * @return usernamePassword filter
-     */
+    // 注册过滤器配置
     @Bean
     public CustomUsernamePasswordAuthenticationFilter customUsernamePasswordAuthenticationFilter() throws Exception {
         CustomUsernamePasswordAuthenticationFilter filter = new CustomUsernamePasswordAuthenticationFilter();
