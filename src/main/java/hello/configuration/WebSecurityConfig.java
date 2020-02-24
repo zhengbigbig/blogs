@@ -1,15 +1,13 @@
 package hello.configuration;
 
-import hello.configuration.authentication.datasource.MyAccessDecisionManager;
-import hello.configuration.authentication.datasource.MyInvocationSecurityMetadataSourceService;
-import hello.configuration.authentication.handler.CustomAuthenticationFailHandler;
-import hello.configuration.authentication.handler.CustomAuthenticationSuccessHandler;
-import hello.configuration.authentication.handler.SimpleAccessDeniedHandler;
-import hello.configuration.authentication.handler.SimpleAuthenticationEntryPoint;
-import hello.configuration.authentication.interceptor.CustomUsernamePasswordAuthenticationFilter;
-import hello.configuration.authentication.provider.CustomEmailAuthenticationProvider;
-import hello.configuration.authentication.strategy.AjaxSessionInformationExpiredStrategy;
+import hello.configuration.security.datasource.MyAccessDecisionManager;
+import hello.configuration.security.datasource.MyInvocationSecurityMetadataSourceService;
+import hello.configuration.security.handler.*;
+import hello.configuration.security.interceptor.CustomUsernamePasswordAuthenticationFilter;
+import hello.configuration.security.provider.CustomEmailAuthenticationProvider;
+import hello.configuration.security.strategy.CustomExpiredSessionStrategy;
 import hello.dao.PermissionMapper;
+import lombok.extern.java.Log;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.access.AccessDecisionManager;
@@ -22,7 +20,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.access.intercept.FilterInvocationSecurityMetadataSource;
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
@@ -32,9 +29,6 @@ import org.springframework.security.web.session.HttpSessionEventPublisher;
 import javax.inject.Inject;
 import java.util.Collections;
 
-@Configuration
-@EnableWebSecurity
-@EnableGlobalMethodSecurity(securedEnabled = true)
 // 告诉spring 加上web安全模块，设置后，所有的请求都会被拦截
 // 权限管理核心：需要实现AuthenticationManager、accessDecisionManager
 // 1.登陆验证拦截器AuthenticationProcessingFilter
@@ -48,57 +42,46 @@ import java.util.Collections;
  调用FilterInvocationSecurityMetadataSource获取被拦截url所需权限 ->
  调用权限管理器 AccessDecisionManager 通过SecurityContextHolder获取用户权限
  */
+@Log
+@Configuration
+@EnableWebSecurity
+@EnableGlobalMethodSecurity(securedEnabled = true)
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Inject
-    private UserDetailsService userService;
-    @Inject
-    private AjaxSessionInformationExpiredStrategy ajaxSessionInformationExpiredStrategy;
-    @Inject
     private PermissionMapper permissionMapper;
-    @Inject
-    private CustomAuthenticationSuccessHandler successHandler;
-    @Inject
-    private CustomAuthenticationFailHandler failHandler;
     @Inject
     private CustomEmailAuthenticationProvider customEmailAuthenticationProvider;
     @Inject
     private SessionRegistry sessionRegistry;
 
-    //    @Inject
-//    private DataSource dataSource;
-//
-//    @Bean
-//    public PersistentTokenRepository persistentTokenRepository() {
-//        JdbcTokenRepositoryImpl tokenRepository = new JdbcTokenRepositoryImpl();
-//        tokenRepository.setDataSource(dataSource);
-//        // tokenRepository.setCreateTableOnStartup(true);
-//        // create table persistent_logins (username varchar(64) not null, series varchar(64) primary key, token varchar(64) not null, last_used timestamp not null)
-//        return tokenRepository;
-//    }
-//
-    private final String[] ignoredURI = {
+
+    private final String[] ignoredWebURI = {
             "/index.html", "/error/**", "/static/**", // 静态资源
             "/",
     };
 
+    private final String[] securityUrlPermit = {
+            "/auth/**"
+    };
+
+    // 避免自定义过滤器交给spring，否则失效
     @Override
     public void configure(WebSecurity web) throws Exception {
-        // 避免自定义过滤器交给spring，否则失效
-        web.ignoring().antMatchers(ignoredURI);
-
+        web.ignoring().antMatchers(ignoredWebURI);
     }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         // csrf默认是开启的，会导致访问403，需要先关闭，一种跨站请求伪造，对post有效
         http
-                .authorizeRequests()
-                .antMatchers("/auth/**", "/auth/login").permitAll()
-                .and().formLogin().loginProcessingUrl("/auth/login")
-                .successHandler(successHandler).failureHandler(failHandler)
-                .and().logout().logoutUrl("/logout")
-                .logoutSuccessUrl("/auth/logout")
+                .csrf().disable().cors()
+                .and()
+                .addFilterBefore(customUsernamePasswordAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+                .authorizeRequests().antMatchers(securityUrlPermit).permitAll();
+        http
+                .logout().logoutUrl(ConstantConfig.WEB_URL.LOGOUT.getUrl())
+                .addLogoutHandler(new CustomLogoutHandler())
                 .permitAll()
                 .deleteCookies("JSESSIONID")
                 .invalidateHttpSession(true)
@@ -112,36 +95,30 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                     }
                 })
                 .and().authorizeRequests().anyRequest().authenticated() //对其他接口的权限限制为登录后才能访问
-                .and().csrf().disable()
+                .and()
                 .exceptionHandling()
                 .accessDeniedHandler(new SimpleAccessDeniedHandler())
                 .authenticationEntryPoint(new SimpleAuthenticationEntryPoint())
+
                 .and().sessionManagement()
-//                .invalidSessionUrl("/session/invalid")
+//                .invalidSessionStrategy(new CustomInvalidSessionStrategy()) // session无效时处理策略，暂不用
+//                .invalidSessionUrl("/session/invalid") // session无效跳转
                 .maximumSessions(1) // 只能一个地方登陆
-                .maxSessionsPreventsLogin(false) // 阻止其他地方登陆
-                .expiredSessionStrategy(ajaxSessionInformationExpiredStrategy) /* session失效后的返回*/.sessionRegistry(sessionRegistry)
-                .and()
-                .and()
-                .addFilterBefore(customUsernamePasswordAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+                .maxSessionsPreventsLogin(true) // 阻止其他地方登陆
+                .expiredSessionStrategy(new CustomExpiredSessionStrategy()) /* session失效后的返回*/
+                .sessionRegistry(sessionRegistry);
 
 
     }
 
     /**
-     * 资源管理
-     * @return
+     * 资源管理,决策放行
      */
     @Bean
     public FilterInvocationSecurityMetadataSource mySecurityMetadataSource() {
-        MyInvocationSecurityMetadataSourceService securityMetadataSource = new MyInvocationSecurityMetadataSourceService(permissionMapper);
-        return securityMetadataSource;
+        return new MyInvocationSecurityMetadataSourceService(permissionMapper);
     }
 
-    /**
-     * 决策放行
-     * @return
-     */
     @Bean
     public AccessDecisionManager myAccessDecisionManager() {
         return new MyAccessDecisionManager();
@@ -150,8 +127,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     /**
      * 注册过滤器配置
      *
-     * @return usernamepassword filter
-     * @throws Exception
+     * @return usernamePassword filter
      */
     @Bean
     public CustomUsernamePasswordAuthenticationFilter customUsernamePasswordAuthenticationFilter() throws Exception {
@@ -159,9 +135,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         ProviderManager providerManager =
                 new ProviderManager(Collections.singletonList(customEmailAuthenticationProvider));
         filter.setAuthenticationManager(providerManager);
-        // HttpSecurity中定义总是失效，暂没找到原因
-        filter.setAuthenticationSuccessHandler(successHandler);
-        filter.setAuthenticationFailureHandler(failHandler);
+        // HttpSecurity中定义总是失效，可能是要绑定到过滤器？
+        filter.setAuthenticationSuccessHandler(new CustomAuthenticationSuccessHandler(sessionRegistry));
+        filter.setAuthenticationFailureHandler(new CustomAuthenticationFailHandler());
         return filter;
     }
 

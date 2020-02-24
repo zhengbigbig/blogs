@@ -1,4 +1,4 @@
-package hello.configuration.authentication;
+package hello.configuration.security.facade;
 
 import lombok.extern.java.Log;
 import org.springframework.security.core.Authentication;

@@ -1,6 +1,5 @@
-package hello.configuration.authentication.provider;
+package hello.configuration.security.provider;
 
-import hello.configuration.authentication.token.EmailLoginAuthenticationToken;
 import hello.service.UserService;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
@@ -9,7 +8,6 @@ import org.springframework.security.authentication.dao.AbstractUserDetailsAuthen
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -18,11 +16,15 @@ import javax.inject.Inject;
 @Service
 public class CustomEmailAuthenticationProvider extends AbstractUserDetailsAuthenticationProvider {
 
-    @Inject
     UserService userService;
 
-    @Inject
     private BCryptPasswordEncoder bCryptPasswordEncoder;
+
+    @Inject
+    public CustomEmailAuthenticationProvider(UserService userService, BCryptPasswordEncoder bCryptPasswordEncoder) {
+        this.userService = userService;
+        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+    }
 
     /**
      * 校验密码有效性.
@@ -84,9 +86,8 @@ public class CustomEmailAuthenticationProvider extends AbstractUserDetailsAuthen
     }
 
     @Override
-    public boolean supports(Class<?> authentication) {
-//        return clazz.equals(
-//                EmailLoginAuthenticationToken.class);
-        return super.supports(authentication);
+    public boolean supports(Class<?> clazz) {
+        return clazz.equals(
+                UsernamePasswordAuthenticationToken.class);
     }
 }

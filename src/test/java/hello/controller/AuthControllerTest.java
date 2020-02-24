@@ -2,9 +2,8 @@ package hello.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
-import hello.configuration.authentication.AuthenticationFacade;
+import hello.configuration.security.facade.AuthenticationFacade;
 import hello.service.AuthService;
-import hello.service.SessionService;
 import hello.service.UserService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,10 +13,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpSession;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -44,16 +39,6 @@ class AuthControllerTest {
     @Mock
     private UserService userService;
     @Mock
-    private SessionRegistry sessionRegistry;
-    @Mock
-    private SessionService sessionService;
-    @Mock
-    private AuthenticationManager authenticationManager;
-    @Mock
-    private SecurityContext context;
-    @Mock
-    private Authentication auth;
-    @Mock
     private AuthenticationFacade authenticationFacade;
 
     // 对每个测试构建
@@ -61,7 +46,7 @@ class AuthControllerTest {
     void setUp() {
 
         AuthService authService = new AuthService(userService, authenticationFacade);
-        mvc = MockMvcBuilders.standaloneSetup(new AuthController(userService, authService, sessionService,sessionRegistry)).build();
+        mvc = MockMvcBuilders.standaloneSetup(new AuthController(userService, authService)).build();
     }
 
     //

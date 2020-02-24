@@ -1,12 +1,14 @@
 package hello.entity.result;
 
 import hello.entity.Blog;
-import lombok.Getter;
+import lombok.Value;
 
+import java.io.Serializable;
 import java.util.List;
 
-@Getter
-public class BlogListResult extends Result<List<Blog>> {
+@Value
+public class BlogListResult extends Result<List<Blog>> implements Serializable {
+    private static final long serialVersionUID = -4396597443716014666L;
     private int total;
     private int page;
     private int totalPage;

@@ -1,6 +1,10 @@
 package hello.entity.result;
 
-public class ObjectResult extends Result<Object> {
+import java.io.Serializable;
+
+public class ObjectResult extends Result<Object> implements Serializable {
+    private static final long serialVersionUID = 1293346174830242143L;
+
     protected ObjectResult(ResultStatus status, String msg, Object data) {
         super(status, msg, data);
     }

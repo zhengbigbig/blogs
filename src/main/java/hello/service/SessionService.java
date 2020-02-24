@@ -1,11 +1,9 @@
 package hello.service;
 
-import hello.configuration.authentication.token.EmailLoginAuthenticationToken;
 import hello.entity.result.NormalResult;
 import hello.entity.result.ObjectResult;
 import hello.entity.user.User;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.session.SessionInformation;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.stereotype.Service;
@@ -13,7 +11,6 @@ import org.springframework.stereotype.Service;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -42,12 +39,14 @@ public class SessionService {
         return NormalResult.success("下线:" + username + "成功");
     }
 
+    // principals 存的是token 便于后面拓展
     public ObjectResult getAllSessions() {
         List<Object> allPrincipals = sessionRegistry.getAllPrincipals();
         List<User> usersOnline = allPrincipals.stream()
-                .map(principal -> userService.getUserByUsernameOrEmail((String) principal))
-                .filter(Objects::nonNull)
-                .filter(user -> sessionRegistry.getAllSessions(user.getUsername(), false).size() > 0)
+                .filter(principal -> sessionRegistry.getAllSessions(principal, false).size() > 0)
+                .map(o -> (UsernamePasswordAuthenticationToken) o)
+                .map(UsernamePasswordAuthenticationToken::getPrincipal)
+                .map(principal -> (User) principal)
                 .collect(Collectors.toList());
         if (usersOnline.size() > 0) {
             return ObjectResult.success("获取成功", usersOnline);

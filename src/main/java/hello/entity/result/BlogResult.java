@@ -2,7 +2,11 @@ package hello.entity.result;
 
 import hello.entity.Blog;
 
-public class BlogResult extends Result<Blog> {
+import java.io.Serializable;
+
+public class BlogResult extends Result<Blog> implements Serializable {
+    private static final long serialVersionUID = 4793833916700181788L;
+
     protected BlogResult(ResultStatus status, String msg, Blog data) {
         super(status, msg, data);
     }

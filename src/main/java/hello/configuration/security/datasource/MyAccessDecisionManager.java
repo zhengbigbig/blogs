@@ -1,7 +1,5 @@
-package hello.configuration.authentication.datasource;
+package hello.configuration.security.datasource;
 
-import hello.utils.exception.ApiRRException;
-import hello.utils.requests.RequestUtils;
 import lombok.extern.java.Log;
 import org.springframework.security.access.AccessDecisionManager;
 import org.springframework.security.access.AccessDeniedException;
@@ -9,9 +7,7 @@ import org.springframework.security.access.ConfigAttribute;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.web.FilterInvocation;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -36,9 +32,7 @@ public class MyAccessDecisionManager implements AccessDecisionManager {
             ConfigAttribute ca = iterator.next();
             //当前请求需要无权限url
             String needRole = ca.getAttribute();
-//            if ("ROLE_ANONYMOUS".equals(needRole)) {
-//                throw new ApiRRException("请先登录!", 403);
-//            }
+
             //当前用户所具有的权限,放行
             Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
             for (GrantedAuthority authority : authorities) {

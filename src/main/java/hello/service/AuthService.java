@@ -1,6 +1,6 @@
 package hello.service;
 
-import hello.configuration.authentication.AuthenticationFacade;
+import hello.configuration.security.facade.AuthenticationFacade;
 import hello.entity.user.User;
 import org.springframework.stereotype.Service;
 
@@ -19,9 +19,9 @@ public class AuthService {
     }
 
     public Optional<User> getCurrentUser() {
-        return Optional.ofNullable(authenticationFacade.getAuthentication())
+        return Optional.ofNullable(authenticationFacade.getAuthentication().getPrincipal())
                 .map(authentication ->
-                        userService.getUserByUsernameOrEmail(((User) authentication.getPrincipal()).getUsername())
+                        userService.getUserByUsernameOrEmail(authentication instanceof User ? ((User) authentication).getUsername():null)
                 );
     }
 }

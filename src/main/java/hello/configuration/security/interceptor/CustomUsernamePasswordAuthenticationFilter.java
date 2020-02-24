@@ -1,18 +1,13 @@
-package hello.configuration.authentication.interceptor;
+package hello.configuration.security.interceptor;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import hello.configuration.authentication.token.EmailLoginAuthenticationToken;
 import lombok.extern.java.Log;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-import org.springframework.security.web.util.matcher.RequestMatcher;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -21,12 +16,15 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import static hello.configuration.ConstantConfig.WEB_URL.LOGIN;
+
 // 重写，便于自定义接受的参数
 @Log
 public class CustomUsernamePasswordAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
     private ThreadLocal<Map<String, String>> threadLocal = new ThreadLocal<>();
+
     public CustomUsernamePasswordAuthenticationFilter() {
-        super(new AntPathRequestMatcher("/login", "POST"));
+        super(new AntPathRequestMatcher(LOGIN.getUrl(), LOGIN.getMethod()));
     }
 
     /**
@@ -49,8 +47,6 @@ public class CustomUsernamePasswordAuthenticationFilter extends AbstractAuthenti
             throw new InternalAuthenticationServiceException("Failed to get the your parameter");
         }
         UsernamePasswordAuthenticationToken authRequest = new UsernamePasswordAuthenticationToken(username, password);
-//        authRequest.setSession(request.getSession().getId());
-
         authRequest.setDetails(authenticationDetailsSource.buildDetails(request));
         return this.getAuthenticationManager().authenticate(authRequest);
     }
@@ -68,6 +64,7 @@ public class CustomUsernamePasswordAuthenticationFilter extends AbstractAuthenti
             try (InputStream is = request.getInputStream()) {
                 bodyParams = objectMapper.readValue(is, Map.class);
             } catch (IOException e) {
+                log.info("userFilter read body exception");
             }
             if (bodyParams == null) {
                 bodyParams = new HashMap<>();

@@ -1,4 +1,4 @@
-package hello.configuration.authentication.handler;
+package hello.configuration.security.handler;
 
 
 import com.google.common.collect.ImmutableMap;
@@ -34,8 +34,9 @@ public class CustomAuthenticationFailHandler extends SimpleUrlAuthenticationFail
         log.info("登录失败:" + exception.getMessage());
         ImmutableMap<String, Object> message = ImmutableMap.of(
                 "uri", request.getRequestURI(),
-                "msg", exception.getMessage(),
-                "status", "error"
+                "msg", "登录失败" + exception.getMessage(),
+                "status", "fail"
+
         );
         RequestUtils.sendMessageToResponse(response, message, 401, "login fail handler");
     }

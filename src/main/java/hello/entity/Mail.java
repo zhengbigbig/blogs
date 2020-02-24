@@ -1,18 +1,18 @@
 package hello.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
+import java.io.Serializable;
 import java.time.Instant;
 
 /**
  * usable 是否有效，1-无效，2-有效,
  */
 
-@Getter
-@Setter
-public class Mail {
+@Data
+public class Mail implements Serializable {
+    private static final long serialVersionUID = -2115399202380442221L;
     @JsonIgnore
     private Integer id;
     private String email;

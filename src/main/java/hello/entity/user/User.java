@@ -2,19 +2,18 @@ package hello.entity.user;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import lombok.Getter;
-import lombok.Setter;
+import hello.configuration.ConstantConfig;
+import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 
-@Getter
-@Setter
-public class User implements UserDetails {
+@Data
+public class User implements Serializable, UserDetails {
 
     private static final long serialVersionUID = -7571859707880852198L;
     private Integer id;
@@ -28,9 +27,9 @@ public class User implements UserDetails {
     private String profession;
     private String address;
     private String technologyStack;
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    @JsonFormat(pattern = ConstantConfig.DATE_FORMAT_ZH, timezone = ConstantConfig.TIMEZONE)
     private Instant createdAt;
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    @JsonFormat(pattern = ConstantConfig.DATE_FORMAT_ZH, timezone = ConstantConfig.TIMEZONE)
     private Instant updatedAt;
 
     private List<Role> roles;
@@ -58,24 +57,6 @@ public class User implements UserDetails {
         this.createdAt = Instant.now();
         this.updatedAt = Instant.now();
     }
-
-    public User(String username, String encryptedPassword, String avatar, String email, Integer sex, String summary, String profession, String address, String technologyStack, Instant createdAt, Instant updatedAt, List<Role> roles, List<? extends GrantedAuthority> authorities) {
-        this.username = username;
-        this.encryptedPassword = encryptedPassword;
-        this.avatar = avatar;
-        this.email = email;
-        this.sex = sex;
-        this.summary = summary;
-        this.profession = profession;
-        this.address = address;
-        this.technologyStack = technologyStack;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-        this.roles = roles;
-        this.authorities = authorities;
-    }
-
-
 
     @JsonIgnore
     @Override
@@ -125,19 +106,18 @@ public class User implements UserDetails {
         this.authorities = authorities;
     }
 
+    // 这里equals 和 hashcode必须重写，因为后续存在registry中的会对比
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof User) {
+            return username.equals(((User) o).getUsername());
+        }
+        return false;
+    }
+
     @Override
     public int hashCode() {
-        return super.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return super.equals(obj);
-    }
-
-    @Override
-    public String toString() {
-        return super.toString();
+        return username.hashCode();
     }
 
 }

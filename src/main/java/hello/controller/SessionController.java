@@ -3,10 +3,10 @@ package hello.controller;
 import hello.entity.result.NormalResult;
 import hello.entity.result.ObjectResult;
 import hello.service.SessionService;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/session")
@@ -24,16 +24,15 @@ public class SessionController {
         return sessionService.getAllSessions();
     }
 
-    @GetMapping("/removeSession/{username}")
+    @GetMapping("/remove/{username}")
     @ResponseBody
     public NormalResult removeSessionSingleUser(@PathVariable("username") String username) {
         return sessionService.invalidateSession(username);
     }
 
-    @RequestMapping("/invalid")
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    @ResponseBody
-    public String invalid() {
-        return "Session 已过期，请重新登录";
+    // 获取session的过期时间
+    @GetMapping("/get-session-timeout")
+    public int getSessionTimeout(HttpServletRequest request) {
+        return request.getSession().getMaxInactiveInterval();
     }
 }

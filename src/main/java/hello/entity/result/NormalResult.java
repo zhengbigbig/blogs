@@ -1,6 +1,10 @@
 package hello.entity.result;
 
-public class NormalResult extends Result {
+import java.io.Serializable;
+
+public class NormalResult extends Result implements Serializable {
+    private static final long serialVersionUID = 6151695778498258614L;
+
     protected NormalResult(ResultStatus status, String msg, Object data) {
         super(status, msg, data);
     }
