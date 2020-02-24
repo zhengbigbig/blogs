@@ -49,4 +49,9 @@ Content-Type: application/json
 Accept: application/json
 
 ###
+GET http://{{host}}:{{port}}/auth/findByUsername?username="admin"
+#Content-Type: application/json
+#Accept: application/json
+
+###
 

@@ -25,6 +25,8 @@ import org.springframework.security.web.access.intercept.FilterInvocationSecurit
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
+import org.springframework.session.web.http.CookieSerializer;
+import org.springframework.session.web.http.DefaultCookieSerializer;
 
 import javax.inject.Inject;
 import java.util.Collections;
@@ -86,6 +88,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .deleteCookies("JSESSIONID")
                 .invalidateHttpSession(true)
                 .clearAuthentication(true)
+                // filter security
                 .withObjectPostProcessor(new ObjectPostProcessor<FilterSecurityInterceptor>() {
                     @Override
                     public <O extends FilterSecurityInterceptor> O postProcess(O fsi) {
@@ -96,10 +99,11 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 })
                 .and().authorizeRequests().anyRequest().authenticated() //对其他接口的权限限制为登录后才能访问
                 .and()
+                // 401 403 处理
                 .exceptionHandling()
                 .accessDeniedHandler(new SimpleAccessDeniedHandler())
                 .authenticationEntryPoint(new SimpleAuthenticationEntryPoint())
-
+                // session
                 .and().sessionManagement()
 //                .invalidSessionStrategy(new CustomInvalidSessionStrategy()) // session无效时处理策略，暂不用
 //                .invalidSessionUrl("/session/invalid") // session无效跳转
@@ -113,6 +117,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     /**
      * 资源管理,决策放行
+     *
      * @return FilterInvocationSecurityMetadataSource
      */
     @Bean
@@ -145,7 +150,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         return new BCryptPasswordEncoder();
     }
 
-    // 自定义session
+    // 自定义session registry
     @Bean
     public SessionRegistry sessionRegistry() {
         return new SessionRegistryImpl();
@@ -155,5 +160,21 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     public HttpSessionEventPublisher httpSessionEventPublisher() {
         return new HttpSessionEventPublisher();
     }
+
+    // 自定义CookieSerializer
+    @Bean
+    public CookieSerializer cookieSerializer() {
+        DefaultCookieSerializer serializer = new DefaultCookieSerializer();
+        serializer.setCookieName("JSESSIONID");
+        serializer.setCookiePath("/");
+        /*
+         该正则会将Cookie设置在父域zbb.cn中，
+         如果有另一个相同父域的子域名www.zbb.cn也会识别这个Cookie，
+         便可以很方便的实现<同父域下>的单点登录
+         */
+        serializer.setDomainNamePattern("^.+?\\.(\\w+\\.[a-z]+)$");
+        return serializer;
+    }
+
 
 }

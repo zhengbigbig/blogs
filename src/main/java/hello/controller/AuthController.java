@@ -9,6 +9,8 @@ import hello.service.UserService;
 import hello.utils.ValidateUtils;
 import lombok.extern.java.Log;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.session.FindByIndexNameSessionRepository;
+import org.springframework.session.Session;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
@@ -27,6 +29,19 @@ public class AuthController {
     public AuthController(UserService userService, AuthService authService) {
         this.userService = userService;
         this.authService = authService;
+    }
+
+    @Inject
+    FindByIndexNameSessionRepository<? extends Session> sessionRepository;
+
+    // TEST SESSION 从redis中找用户session
+    @GetMapping("/auth/findByUsername")
+    @ResponseBody
+    public Map findByUsername(@RequestParam String username) {
+        Map<String, ? extends Session> usersSessions = sessionRepository.findByIndexNameAndIndexValue(
+                FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME,
+                username);
+        return usersSessions;
     }
 
     @GetMapping("/auth/currentUser")
