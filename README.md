@@ -28,8 +28,9 @@ AccessDecisionManager中return是不会被放行的
 
 ## spring-security-redis branch
 1. 引入redis session对session进一步测试，未写完整，后面使用token，只记录思路
-2. login后进行HttpSession进行session.setAttribute(session.getId(),response.getData())
-3. logout后清除session.removeAttribute(session.getId());
+2. login后进行HttpSession或SessionRepository进行sessionId和数据保存
+3. logout后清除掉
 4. 定义拦截器对session进行判断，有则放行，没有则拒绝
-5. 根据实际业务实际实现，后面将使用 JWT+Redis
+5. 根据实际业务实际实现，spring security实际上已经帮你做了，但需要更复杂的功能，可以使用各阶段的hooks进行定制
+6. 后面将使用 JWT+Redis详细写
 
