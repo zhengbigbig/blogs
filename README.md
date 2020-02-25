@@ -32,5 +32,13 @@ AccessDecisionManager中return是不会被放行的
 3. logout后清除掉
 4. 定义拦截器对session进行判断，有则放行，没有则拒绝
 5. 根据实际业务实际实现，spring security实际上已经帮你做了，但需要更复杂的功能，可以使用各阶段的hooks进行定制
-6. 后面将使用 JWT+Redis详细写
+6. 解决travis-ci Error creating bean with name 'enableRedisKeyspaceNotificationsInitializer' 报错
+增加配置如下， 禁用自动配置
+
+```java
+    @Bean
+    public static ConfigureRedisAction configureRedisAction() {
+        return ConfigureRedisAction.NO_OP;
+    }
+```
 
