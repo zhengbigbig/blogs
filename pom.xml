@@ -222,6 +222,30 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>1.6.0</version>
                 <executions>
+                    <!-- 启动redis -->
+                    <execution>
+                        <id>start-test-redis</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <longModulepath>false</longModulepath>
+                            <executable>docker</executable>
+                            <arguments>
+                                <argument>run</argument>
+                                <argument>--name</argument>
+                                <argument>test-redis</argument>
+                                <argument>-p</argument>
+                                <argument>6380:6379</argument>
+                                <argument>-d</argument>
+                                <argument>redis</argument>
+                                <argument>redis-server</argument>
+                                <argument>--appendonly</argument>
+                                <argument>yes</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
                     <execution>
                         <id>start-test-database</id>
                         <phase>pre-integration-test</phase>
@@ -274,6 +298,22 @@
                                 <argument>rm</argument>
                                 <argument>-f</argument>
                                 <argument>test-mysql</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>teardown-test-redis</id>
+                        <phase>post-integration-test</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <longModulepath>false</longModulepath>
+                            <executable>docker</executable>
+                            <arguments>
+                                <argument>rm</argument>
+                                <argument>-f</argument>
+                                <argument>test-redis</argument>
                             </arguments>
                         </configuration>
                     </execution>
