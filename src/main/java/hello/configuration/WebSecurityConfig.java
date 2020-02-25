@@ -25,6 +25,8 @@ import org.springframework.security.web.access.intercept.FilterInvocationSecurit
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
+import org.springframework.session.data.redis.config.ConfigureRedisAction;
+import org.springframework.session.data.redis.config.annotation.web.http.EnableRedisHttpSession;
 import org.springframework.session.web.http.CookieSerializer;
 import org.springframework.session.web.http.DefaultCookieSerializer;
 
@@ -48,6 +50,7 @@ import java.util.Collections;
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(securedEnabled = true)
+@EnableRedisHttpSession
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Inject
@@ -176,5 +179,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         return serializer;
     }
 
-
+    // gitHub 跑ci时出错解决 禁用自动配置
+    @Bean
+    public static ConfigureRedisAction configureRedisAction() {
+        return ConfigureRedisAction.NO_OP;
+    }
 }
