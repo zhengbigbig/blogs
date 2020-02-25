@@ -15,7 +15,7 @@ public class CustomExpiredSessionStrategy implements SessionInformationExpiredSt
     public void onExpiredSessionDetected(SessionInformationExpiredEvent event) throws IOException, ServletException {
         HttpServletResponse response = event.getResponse();
         ImmutableMap<String, Object> message = ImmutableMap.of(
-                "msg", "当前用户已在其他地方登录，请若不是本人，请及时修改密码",
+                "msg", "登录失效，请重新登录",
                 "status", "warming"
 
         );

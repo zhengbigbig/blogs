@@ -42,7 +42,7 @@ public class MyIntegrationTest {
                 String s = new String(bytes);
                 System.out.println("s = " + s);
                 Assertions.assertEquals(200, response1.getStatusLine().getStatusCode());
-                Assertions.assertTrue(s.contains("用户没有登录"));
+                Assertions.assertTrue(s.contains("当前未登录"));
                 EntityUtils.consume(entity1);
             }
         }

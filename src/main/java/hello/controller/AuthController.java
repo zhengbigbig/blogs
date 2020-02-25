@@ -1,5 +1,6 @@
 package hello.controller;
 
+import com.google.common.collect.ImmutableMap;
 import hello.entity.result.NormalResult;
 import hello.entity.result.ObjectResult;
 import hello.entity.result.Result;
@@ -9,11 +10,14 @@ import hello.service.UserService;
 import hello.utils.ValidateUtils;
 import lombok.extern.java.Log;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.session.FindByIndexNameSessionRepository;
 import org.springframework.session.Session;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
+import javax.servlet.http.HttpSession;
 import java.security.Principal;
 import java.util.Map;
 import java.util.Optional;
@@ -32,19 +36,25 @@ public class AuthController {
     }
 
     @Inject
-    FindByIndexNameSessionRepository<? extends Session> sessionRepository;
+    private FindByIndexNameSessionRepository<? extends Session> sessionRegistry;
+
 
     // TEST SESSION 从redis中找用户session
-    @GetMapping("/auth/findByUsername")
+    @GetMapping("/auth/login")
     @ResponseBody
-    public Map findByUsername(@RequestParam String username) {
-        Map<String, ? extends Session> usersSessions = sessionRepository.findByIndexNameAndIndexValue(
-                FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME,
-                username);
-        return usersSessions;
+    public ObjectResult findByUsername(HttpSession httpSession, Principal principal) {
+        Session session = sessionRegistry.findById(httpSession.getId());
+        // 获得详细信息
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication.getPrincipal().equals("anonymousUser")) {
+            return ObjectResult.failure("登录失败");
+        }
+        User user = (User) authentication.getPrincipal();
+        return ObjectResult.success("登录成功", ImmutableMap.of("user", user, "session", session));
     }
 
-    @GetMapping("/auth/currentUser")
+
+    @GetMapping("/auth")
     @ResponseBody // 将返回值限定在body里面
     public Object currentUser(Principal principal) {
         return authService.getCurrentUser()
@@ -108,10 +118,9 @@ public class AuthController {
 
     @GetMapping("/auth/logout")
     @ResponseBody
-    public ObjectResult logout() {
-        return authService.getCurrentUser()
-                .map(user -> ObjectResult.success("注销失败，未知原因", false))
-                .orElse(ObjectResult.failure("注销成功！"));
+    public NormalResult logout(HttpSession httpSession) {
+        httpSession.invalidate();
+        return NormalResult.success("注销成功！");
     }
 
     @PostMapping("/auth/resetPw")

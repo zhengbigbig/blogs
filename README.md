@@ -41,4 +41,11 @@ AccessDecisionManager中return是不会被放行的
         return ConfigureRedisAction.NO_OP;
     }
 ```
+7. 默认的SessionCreationPolicy：```IF_REQUIRED```，
+会导致maximumSessions无效，用户异地依旧可以登录，设置成NEVER即可解决这个问题，
+原理是避免spring security创建新的session，不经过
+设置NEVER避免spring security创建新的session 
+8. 分支最后更新到集成spring security session redis，可配合nginx分布式部署，但管理用户上下线功能未重构
+
+
 

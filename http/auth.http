@@ -54,4 +54,8 @@ GET http://{{host}}:{{port}}/auth/findByUsername?username="admin"
 #Accept: application/json
 
 ###
+GET http://{{host}}:{{port}}/auth/login
+Content-Type: application/json
+Accept: application/json
 
+###

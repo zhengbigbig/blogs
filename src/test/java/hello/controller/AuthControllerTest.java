@@ -44,8 +44,8 @@ class AuthControllerTest {
     //
     @Test
     void returnNotLoginByDefault() throws Exception {
-        mvc.perform(get("/auth/currentUser")).andExpect(status().isOk())
-                .andExpect(mvcResult -> Assertions.assertTrue(mvcResult.getResponse().getContentAsString(Charset.defaultCharset()).contains("当前未登录")));
+        mvc.perform(get("/auth/currentUser")).andExpect(status().is4xxClientError());
+//                .andExpect(mvcResult -> Assertions.assertTrue(mvcResult.getResponse().getContentAsString(Charset.defaultCharset()).contains("当前未登录")));
     }
 
     @Test
@@ -53,8 +53,8 @@ class AuthControllerTest {
         /*
          * 未登录时，/auth接口返回未登录状态
          */
-        mvc.perform(get("/auth/currentUser")).andExpect(status().isOk())
-                .andExpect(mvcResult -> Assertions.assertTrue(mvcResult.getResponse().getContentAsString(Charset.defaultCharset()).contains("当前未登录")));
+        mvc.perform(get("/auth/currentUser")).andExpect(status().is4xxClientError());
+//                .andExpect(mvcResult -> Assertions.assertTrue(mvcResult.getResponse().getContentAsString(Charset.defaultCharset()).contains("当前未登录")));
 
         /*
          * 使用/auth/login登录

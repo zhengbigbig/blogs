@@ -1,44 +1,25 @@
 package hello.configuration.security.listener;
 
-import com.alibaba.fastjson.JSON;
 import lombok.extern.java.Log;
-import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
 import javax.servlet.annotation.WebListener;
-import javax.servlet.http.HttpSession;
-import javax.servlet.http.HttpSessionAttributeListener;
-import javax.servlet.http.HttpSessionBindingEvent;
+import javax.servlet.http.HttpSessionEvent;
 
 @WebListener
 @Service
 @Log
-public class SessionListener implements HttpSessionAttributeListener {
-    @Inject
-    private SessionRegistry sessionRegistry;
-
+public class SessionListener extends HttpSessionEventPublisher {
     @Override
-    public void attributeAdded(HttpSessionBindingEvent httpSessionBindingEvent) {
-        HttpSession session = httpSessionBindingEvent.getSession();
-        log.info(httpSessionBindingEvent.getName() + " add-Session: " + session.getId());
-        log.info(JSON.toJSONString(sessionRegistry.getAllPrincipals()));
+    public void sessionCreated(HttpSessionEvent event) {
+        log.info(event.getSession().getId() + "::created");
+        super.sessionCreated(event);
     }
 
     @Override
-    public void attributeRemoved(HttpSessionBindingEvent httpSessionBindingEvent) {
-        HttpSession session = httpSessionBindingEvent.getSession();
-        log.info(httpSessionBindingEvent.getName() + " remove-Session: " + session.getId());
-        log.info(JSON.toJSONString(sessionRegistry.getAllPrincipals()));
-    }
-
-    @Override
-    public void attributeReplaced(HttpSessionBindingEvent httpSessionBindingEvent) {
-        log.info("--attributeReplaced--");
-        String oldName = httpSessionBindingEvent.getName();
-        log.info("replaceSession::" + "oldName: " + oldName + "--oldSession: " + httpSessionBindingEvent.getSession().getId());
-        HttpSession session = httpSessionBindingEvent.getSession();
-        log.info("newName---:" + session.getAttribute(oldName) + "--newSession:" + "--" + httpSessionBindingEvent.getSession().getId());
-        log.info(JSON.toJSONString(sessionRegistry.getAllPrincipals()));
+    public void sessionDestroyed(HttpSessionEvent event) {
+        log.info(event.getSession().getId() + "::destroyed");
+        super.sessionDestroyed(event);
     }
 }

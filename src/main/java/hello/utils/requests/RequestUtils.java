@@ -61,7 +61,7 @@ public class RequestUtils {
      * @param response       HttpServletResponse
      * @param body           responseBody
      * @param responseStatus httpStatus
-     * @param logMessage log.info
+     * @param logMessage     log.info
      */
     public static void sendMessageToResponse(HttpServletResponse response, Map<String, Object> body, int responseStatus, String logMessage) {
         try {
@@ -81,6 +81,7 @@ public class RequestUtils {
 
     /**
      * TODO 需要忽视的安全的文件资源
+     *
      * @param request request
      * @return boolean
      */
@@ -100,10 +101,11 @@ public class RequestUtils {
     }
 
     /**
-     *  TODO 认证失败处理 401 403
-     * @param request request
-     * @param response response
-     * @param msg 认证信息
+     * TODO 认证失败处理 401 403
+     *
+     * @param request        request
+     * @param response       response
+     * @param msg            认证信息
      * @param scUnauthorized 状态码
      */
     public static void sendMessageToResponseWhenReject(HttpServletRequest request, HttpServletResponse response, String msg, int scUnauthorized) {

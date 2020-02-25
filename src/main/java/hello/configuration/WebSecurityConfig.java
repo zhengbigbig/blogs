@@ -13,23 +13,19 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.access.AccessDecisionManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.core.session.SessionRegistry;
-import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.access.intercept.FilterInvocationSecurityMetadataSource;
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.session.HttpSessionEventPublisher;
-import org.springframework.session.data.redis.config.ConfigureRedisAction;
-import org.springframework.session.data.redis.config.annotation.web.http.EnableRedisHttpSession;
-import org.springframework.session.web.http.CookieSerializer;
-import org.springframework.session.web.http.DefaultCookieSerializer;
+import org.springframework.session.FindByIndexNameSessionRepository;
+import org.springframework.session.Session;
+import org.springframework.session.security.SpringSessionBackedSessionRegistry;
 
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import java.util.Collections;
 
@@ -49,26 +45,22 @@ import java.util.Collections;
 @Log
 @Configuration
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(securedEnabled = true)
-@EnableRedisHttpSession
-public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
-
+public class WebSecurityConfig<S extends Session> extends WebSecurityConfigurerAdapter {
     @Inject
     private PermissionMapper permissionMapper;
     @Inject
     private CustomEmailAuthenticationProvider customEmailAuthenticationProvider;
-    @Inject
-    private SessionRegistry sessionRegistry;
-
-
     private final String[] ignoredWebURI = {
-            "/index.html", "/error/**", "/static/**", // 静态资源
-            "/",
+            "/", "/index.html", "/error/**", "/static/**", // 静态资源
+            "/js/**", "/css/**", "/fonts/**"
     };
 
     private final String[] securityUrlPermit = {
-            "/auth/**"
+            "/auth/**", "/favicon.ico"
     };
+
+    @Inject
+    private FindByIndexNameSessionRepository<S> sessionRepository;
 
     // 避免自定义过滤器交给spring，否则失效
     @Override
@@ -108,13 +100,14 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .authenticationEntryPoint(new SimpleAuthenticationEntryPoint())
                 // session
                 .and().sessionManagement()
+                // 设置NEVER避免spring security创建新的session 导致maximumSessions无效
+//                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
 //                .invalidSessionStrategy(new CustomInvalidSessionStrategy()) // session无效时处理策略，暂不用
 //                .invalidSessionUrl("/session/invalid") // session无效跳转
                 .maximumSessions(1) // 只能一个地方登陆
-                .maxSessionsPreventsLogin(true) // 阻止其他地方登陆
+                .maxSessionsPreventsLogin(false) // 阻止其他地方登陆
                 .expiredSessionStrategy(new CustomExpiredSessionStrategy()) /* session失效后的返回*/
-                .sessionRegistry(sessionRegistry);
-
+                .sessionRegistry(sessionRegistry());
 
     }
 
@@ -141,7 +134,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 new ProviderManager(Collections.singletonList(customEmailAuthenticationProvider));
         filter.setAuthenticationManager(providerManager);
         // HttpSecurity中定义总是失效，可能是要绑定到过滤器？
-        filter.setAuthenticationSuccessHandler(new CustomAuthenticationSuccessHandler(sessionRegistry));
+        filter.setAuthenticationSuccessHandler(new CustomAuthenticationSuccessHandler());
         filter.setAuthenticationFailureHandler(new CustomAuthenticationFailHandler());
         return filter;
     }
@@ -154,34 +147,11 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     // 自定义session registry
+    @PostConstruct
     @Bean
-    public SessionRegistry sessionRegistry() {
-        return new SessionRegistryImpl();
+    public SpringSessionBackedSessionRegistry<S> sessionRegistry() {
+        return new SpringSessionBackedSessionRegistry<>(this.sessionRepository);
     }
 
-    @Bean
-    public HttpSessionEventPublisher httpSessionEventPublisher() {
-        return new HttpSessionEventPublisher();
-    }
 
-    // 自定义CookieSerializer
-    @Bean
-    public CookieSerializer cookieSerializer() {
-        DefaultCookieSerializer serializer = new DefaultCookieSerializer();
-        serializer.setCookieName("JSESSIONID");
-        serializer.setCookiePath("/");
-        /*
-         该正则会将Cookie设置在父域zbb.cn中，
-         如果有另一个相同父域的子域名www.zbb.cn也会识别这个Cookie，
-         便可以很方便的实现<同父域下>的单点登录
-         */
-        serializer.setDomainNamePattern("^.+?\\.(\\w+\\.[a-z]+)$");
-        return serializer;
-    }
-
-    // gitHub 跑ci时出错解决 禁用自动配置
-    @Bean
-    public static ConfigureRedisAction configureRedisAction() {
-        return ConfigureRedisAction.NO_OP;
-    }
 }
