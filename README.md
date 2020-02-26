@@ -47,5 +47,7 @@ AccessDecisionManager中return是不会被放行的
 设置NEVER避免spring security创建新的session 
 8. 分支最后更新到集成spring security session redis，可配合nginx分布式部署，但管理用户上下线功能未重构
 
+## spring-security-jwt-redis 
+1. 引入依赖HuTool对token操作进行封装，包含AES加密解密
 
 
