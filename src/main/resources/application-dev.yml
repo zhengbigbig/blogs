@@ -1,0 +1,35 @@
+# global time
+spring:
+  # database
+  datasource:
+    url: jdbc:mysql://localhost:3306/test?useSSL=false&useUnicode=true&characterEncoding=utf-8&useLegacyDatetimeCode=false&serverTimezone=UTC
+    username: root
+    password: my-secret-pw
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  # redis
+  redis:
+    database: 0
+    host: localhost
+    port: 6379
+    password:
+    timeout: 2000
+    jedis:
+      pool:
+        # 连接池中的最大空闲连接
+        max-idle: 8
+        # 连接池中的最小空闲连接
+        min-idle: 10
+        # 连接池最大连接数（使用负值表示没有限制）
+        max-active: 100
+        # 连接池最大阻塞等待时间（使用负值表示没有限制）
+        max-wait: -1
+  # session
+  session:
+    # session存储类型为 redis 空时禁用
+    store-type: redis
+    redis:
+      # 更新策略，ON_SAVE在调用#SessionRepository#save(Session)时，在response commit前刷新缓存，
+      # IMMEDIATE只要有任何更新就会刷新缓存,默认为on_save
+      flush-mode: on_save
+      # 存储session的密钥的命名空间 默认spring:session
+      namespace: spring:session
