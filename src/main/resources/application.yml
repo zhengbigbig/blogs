@@ -19,5 +19,20 @@ spring:
             enable: true
             required: true
 # mybatis
-mybatis:
-  config-location: classpath:db/mybatis/mybatis_config.xml
+#mybatis:
+#  config-location: classpath:db/mybatis/mybatis_config.xml
+
+# 配置slq打印日志
+mybatis-plus:
+  # 自定义xml文件路径
+  mapper-locations: classpath:db/mapper/*Mapper.xml
+  # 自定义xml文件中用到的实体类路径
+  type-aliases-package: hello.entity
+  configuration:
+    # 开启驼峰映射
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+    # 返回map时，true:当查询数据为空时字段返回为null；false:不加这个查询数据为空时，字段将被隐藏
+    call-setters-on-nulls: true
+    # sql日志打印
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl

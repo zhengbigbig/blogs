@@ -44,7 +44,3 @@ spring:
       # 存储session的密钥的命名空间 默认spring:session
       namespace: spring:session
 
-# 配置slq打印日志
-mybatis-plus:
-  configuration:
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
