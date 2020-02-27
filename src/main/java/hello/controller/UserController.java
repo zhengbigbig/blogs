@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import hello.mapper.UserMapper;
 import hello.entity.user.User;
-import hello.service.UserPlusService;
+import hello.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,7 +19,7 @@ public class UserController {
     UserMapper userMapper;
 
     @Autowired
-    UserPlusService userPlusService;
+    UserService userService;
 
     @GetMapping("/getAll")
     public List<User> getAll() {
@@ -60,12 +60,12 @@ public class UserController {
 
     @GetMapping("/getAllByService")
     public List<User> getAllByService() {
-        return userPlusService.list();
+        return userService.list();
     }
 
     @PostMapping("/insertUserByService")
     public Boolean insertUserByService(@RequestBody User user) {
-        return userPlusService.save(user);
+        return userService.save(user);
     }
 
     @PostMapping("/updateUserByService")
@@ -74,11 +74,11 @@ public class UserController {
 
         queryWrapper.eq("id", user.getId());
 
-        return userPlusService.update(user, queryWrapper);
+        return userService.update(user, queryWrapper);
     }
 
     @DeleteMapping("/deleteUserByService/{id}")
     public Boolean deleteUserByService(@PathVariable("id") String id) {
-        return userPlusService.removeById(id);
+        return userService.removeById(id);
     }
 }

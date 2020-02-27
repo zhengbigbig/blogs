@@ -1,5 +1,6 @@
-package hello.dao;
+package hello.mapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import hello.entity.user.Permission;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -8,7 +9,7 @@ import org.apache.ibatis.annotations.Select;
 import java.util.List;
 
 @Mapper
-public interface PermissionMapper {
+public interface PermissionMapper extends BaseMapper<Permission> {
     @Select("select * from sys_permission")
     List<Permission> findAllPermission();
 

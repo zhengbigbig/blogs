@@ -1,6 +1,6 @@
 package hello.configuration.security.datasource;
 
-import hello.dao.PermissionMapper;
+import hello.mapper.PermissionMapper;
 import hello.entity.user.Permission;
 import lombok.extern.java.Log;
 import org.springframework.security.access.ConfigAttribute;

@@ -1,6 +1,7 @@
 package hello.service;
 
 import hello.entity.user.User;
+import hello.service.impl.UserServiceImpl;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -10,10 +11,10 @@ import java.util.Optional;
 
 @Service
 public class AuthService {
-    private final UserService userService;
+    private final UserServiceImpl userService;
 
     @Inject
-    public AuthService(UserService userService) {
+    public AuthService(UserServiceImpl userService) {
         this.userService = userService;
     }
 

@@ -7,7 +7,7 @@ import hello.configuration.security.handler.*;
 import hello.configuration.security.interceptor.CustomUsernamePasswordAuthenticationFilter;
 import hello.configuration.security.provider.CustomEmailAuthenticationProvider;
 import hello.configuration.security.strategy.CustomExpiredSessionStrategy;
-import hello.dao.PermissionMapper;
+import hello.mapper.PermissionMapper;
 import lombok.extern.java.Log;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
