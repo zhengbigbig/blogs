@@ -2,25 +2,23 @@ package hello.mapper;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.core.toolkit.Constants;
 import hello.entity.user.User;
+import org.apache.ibatis.annotations.Param;
 
 //可以继承或者不继承BaseMapper
 public interface UserMapper extends BaseMapper<User> {
-    @Override
-    User selectOne(Wrapper<User> queryWrapper);
-
     /**
-     * <p>
-     * 查询 : 根据state状态查询用户列表，分页显示
-     * </p>
+     * 如果自定义的方法还希望能够使用MP提供的Wrapper条件构造器，则需要如下写法
      *
-     * @param page 分页对象,xml中可以从里面进行取值,传递参数 Page 即自动分页,必须放在第一位(你可以继承Page实现自己的分页对象)
-     * @param state 状态
-     * @return 分页对象
+     * @param userWrapper new QueryWrapper<>()
+     * @return User
      */
+    User getUserByUsernameOrEmail(@Param(Constants.WRAPPER) Wrapper<User> userWrapper);
 
 
-    IPage<User> selectPageVo(Page<?> page, Integer state);
+    int updateUser(@Param("user") User user);
+
+    int deleteOne();
+
 }

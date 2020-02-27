@@ -1,6 +1,6 @@
 package hello.configuration.security.provider;
 
-import hello.service.UserService;
+import hello.service.impl.UserServiceImpl;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -16,12 +16,12 @@ import javax.inject.Inject;
 @Service
 public class CustomEmailAuthenticationProvider extends AbstractUserDetailsAuthenticationProvider {
 
-    UserService userService;
+    private UserServiceImpl userService;
 
     private BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Inject
-    public CustomEmailAuthenticationProvider(UserService userService, BCryptPasswordEncoder bCryptPasswordEncoder) {
+    public CustomEmailAuthenticationProvider(UserServiceImpl userService, BCryptPasswordEncoder bCryptPasswordEncoder) {
         this.userService = userService;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
     }

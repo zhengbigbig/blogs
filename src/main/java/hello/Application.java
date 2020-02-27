@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.TimeZone;
 
 @SpringBootApplication
+@MapperScan("hello.mapper") // 扫描Mapper
 public class Application {
 
     public static void main(String[] args) {

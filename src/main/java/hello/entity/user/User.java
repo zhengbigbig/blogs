@@ -1,5 +1,7 @@
 package hello.entity.user;
 
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import hello.configuration.ConstantConfig;
@@ -13,6 +15,7 @@ import java.util.Collection;
 import java.util.List;
 
 @Data
+@TableName("user")
 public class User implements Serializable, UserDetails {
 
     private static final long serialVersionUID = -7571859707880852198L;
@@ -20,6 +23,9 @@ public class User implements Serializable, UserDetails {
     private String username;
     @JsonIgnore
     private String encryptedPassword;
+    @TableField(exist = false)
+    @JsonIgnore
+    private String password;
     private String avatar;
     private String email;
     private Integer sex; // 0 无性别  1 男  2 女
@@ -31,8 +37,9 @@ public class User implements Serializable, UserDetails {
     private Instant createdAt;
     @JsonFormat(pattern = ConstantConfig.DATE_FORMAT_ZH, timezone = ConstantConfig.TIMEZONE)
     private Instant updatedAt;
-
+    @TableField(exist = false)
     private List<Role> roles;
+    @TableField(exist = false)
     @JsonIgnore
     private List<? extends GrantedAuthority> authorities;
 
@@ -49,13 +56,19 @@ public class User implements Serializable, UserDetails {
     }
 
     public User(Integer id, String username, String encryptedPassword, String email) {
-        this.id = id;
+        if (id != null) {
+            this.id = id;
+        }
         this.username = username;
         this.encryptedPassword = encryptedPassword;
         this.avatar = "";
         this.email = email;
         this.createdAt = Instant.now();
         this.updatedAt = Instant.now();
+    }
+
+    public static User create(Integer id, String username, String encryptedPassword, String email) {
+        return new User(id, username, encryptedPassword, email);
     }
 
     @JsonIgnore

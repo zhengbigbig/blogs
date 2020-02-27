@@ -6,7 +6,7 @@ import hello.entity.result.ObjectResult;
 import hello.entity.result.Result;
 import hello.entity.user.User;
 import hello.service.AuthService;
-import hello.service.UserService;
+import hello.service.impl.UserServiceImpl;
 import hello.utils.ValidateUtils;
 import lombok.extern.java.Log;
 import org.springframework.dao.DuplicateKeyException;
@@ -20,17 +20,16 @@ import javax.inject.Inject;
 import javax.servlet.http.HttpSession;
 import java.security.Principal;
 import java.util.Map;
-import java.util.Optional;
 
 // Filter->构造Token->AuthenticationManager->转给Provider处理->认证处理成功后续操作或者不通过抛异常
 @Log
 @RestController
 public class AuthController {
-    private final UserService userService;
+    private final UserServiceImpl userService;
     private final AuthService authService;
 
     @Inject
-    public AuthController(UserService userService, AuthService authService) {
+    public AuthController(UserServiceImpl userService, AuthService authService) {
         this.userService = userService;
         this.authService = authService;
     }
@@ -85,7 +84,7 @@ public class AuthController {
         // 现在使用数据库username字段改为unique则直接保存捕获异常然后抛出错误
         try {
             userService.updateSms(email);
-            userService.save(username, password, email);
+            userService.insert(username, password, email);
             return ObjectResult.success("注册成功!", null);
 
         } catch (DuplicateKeyException e) {
@@ -135,16 +134,16 @@ public class AuthController {
         if (password.equals(rePassword)) {
             return NormalResult.failure("Passwords entered twice are inconsistent");
         }
-        Optional<User> user = Optional.ofNullable(
-                userService.getUserByUsernameOrEmail(email));
-        if (!user.isPresent()) {
+        User user = userService.getUserByUsernameOrEmail(email);
+        if (null == user) {
             return NormalResult.failure("invalid email");
         }
         // 验证验证码是否一致
         if (!userService.isEqualSms(email, Integer.parseInt(sms))) {
             return NormalResult.failure("invalid sms_code");
         }
-        if (userService.updateUserPassword(user.get(), password) > 0) {
+        user.setPassword(password);
+        if (userService.updatePassword(user) > 0) {
             return NormalResult.success("修改成功");
         } else {
             return NormalResult.failure("修改失败");
