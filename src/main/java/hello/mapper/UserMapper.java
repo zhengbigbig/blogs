@@ -19,6 +19,4 @@ public interface UserMapper extends BaseMapper<User> {
 
     int updateUser(@Param("user") User user);
 
-    int deleteOne();
-
 }

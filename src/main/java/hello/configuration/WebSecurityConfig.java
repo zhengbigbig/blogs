@@ -1,6 +1,5 @@
 package hello.configuration;
 
-import hello.configuration.ConstantConfig;
 import hello.configuration.security.datasource.MyAccessDecisionManager;
 import hello.configuration.security.datasource.MyInvocationSecurityMetadataSourceService;
 import hello.configuration.security.handler.*;
@@ -57,7 +56,7 @@ public class WebSecurityConfig<S extends Session> extends WebSecurityConfigurerA
     };
 
     private final String[] securityUrlPermit = {
-            "/auth/**", "/favicon.ico","/user/**"
+            "/auth/**", "/favicon.ico", "/user/**"
     };
 
     @Inject

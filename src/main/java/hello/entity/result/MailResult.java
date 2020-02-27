@@ -1,6 +1,6 @@
 package hello.entity.result;
 
-import hello.entity.Mail;
+import hello.entity.EmailSms;
 
 import java.io.Serializable;
 
@@ -11,7 +11,7 @@ public class MailResult extends Result<Object> implements Serializable {
         super(status, msg, data);
     }
 
-    public static MailResult success(String msg, Mail mail) {
+    public static MailResult success(String msg, EmailSms mail) {
         return new MailResult(ResultStatus.OK, msg, mail);
     }
 

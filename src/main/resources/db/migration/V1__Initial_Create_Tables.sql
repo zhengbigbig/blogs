@@ -15,12 +15,12 @@ create table user
     state              tinyint default 1
 );
 
-create table sms
+create table email_sms
 (
     id         bigint primary key auto_increment,
     email      varchar(100) not null,
     sms        int          not null,
-    usable     tinyint      not null comment '是否有效，1-无效，2-有效',
+    usable     tinyint      not null default 1 comment '是否有效，1-有效，0-无效',
     created_at timestamp,
     dead_line  timestamp
 );
@@ -32,7 +32,7 @@ CREATE EVENT e_delete_sms
         EVERY 3 MINUTE
     DO
     DELETE
-    FROM sms
+    FROM email_sms
     WHERE dead_line < current_timestamp;
 
 # 角色

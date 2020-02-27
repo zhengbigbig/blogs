@@ -2,16 +2,10 @@ package hello.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import hello.dao.MailDao;
-import hello.entity.Mail;
-import hello.entity.result.MailResult;
-import hello.entity.result.NormalResult;
-import hello.entity.result.Result;
 import hello.entity.user.Permission;
 import hello.entity.user.User;
 import hello.mapper.PermissionMapper;
 import hello.mapper.UserMapper;
-import hello.service.MailService;
 import hello.service.UserService;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -21,25 +15,19 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.inject.Inject;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService, UserDetailsService {
-
+    @Inject
     private UserMapper userMapper;
+    @Inject
     private BCryptPasswordEncoder bCryptPasswordEncoder;
-    private MailDao mailDao;
-    private MailService mailService;
+    @Inject
     private PermissionMapper permissionMapper;
 
-    @Inject
-    public UserServiceImpl(UserMapper userMapper, BCryptPasswordEncoder bCryptPasswordEncoder, MailDao mailDao, MailService mailService, PermissionMapper permissionMapper) {
-        this.userMapper = userMapper;
-        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
-        this.mailDao = mailDao;
-        this.mailService = mailService;
-        this.permissionMapper = permissionMapper;
-    }
 
     // C
     public int insert(String username, String password, String email) {
@@ -85,41 +73,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return user;
     }
 
-    public boolean isUserExist(String searchName) {
-        return Optional.ofNullable(getUserByUsernameOrEmail(searchName))
-                .map(user -> true).orElse(false);
-    }
-
-    // 生成6位验证码并发送邮件，发送后存入数据库
-    public Result<Object> sendMailIfSuccessThenSaveSms(Map<String, String> registerUser) {
-        String email = registerUser.get("email");
-        Integer code = new Random().nextInt(999999);
-        try {
-            mailService.sendMail(registerUser, code);
-            mailDao.insertSms(new Mail(email, code));
-            return MailResult.success("获取成功", new Mail(email, code));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return NormalResult.failure("邮件发送异常");
-        }
-
-    }
-
-    public Integer getSmsByEmail(String email) {
-        return Optional.ofNullable(mailDao.getSmsByEmail(email))
-                .map(mail -> mail.getSms())
-                .orElse(-1);
-    }
-
-    public boolean isEqualSms(String email, Integer fromRequest) {
-        Integer sms = getSmsByEmail(email);
-        return sms != -1 && sms.equals(fromRequest);
-    }
-
-
-    public int updateSms(String email) {
-        return mailDao.updateSms(email);
-    }
     // D
 
 }

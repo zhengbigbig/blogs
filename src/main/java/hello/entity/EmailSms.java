@@ -4,13 +4,13 @@ import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
-import hello.entity.user.User;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 /**
  * <p>
@@ -23,28 +23,31 @@ import java.time.LocalDateTime;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
-public class Blog implements Serializable {
+public class EmailSms implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 5548896347008919713L;
 
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
-    private Long userId;
+    private String email;
 
-    private User user;
+    private Integer sms;
 
-    private String title;
-
-    private String description;
-
-    private String content;
-
+    /**
+     * 是否有效，1-有效，0-无效
+     */
+    @JsonIgnore
+    private Integer usable;
+    @JsonIgnore
     @TableField(fill = FieldFill.INSERT)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
+    @JsonIgnore
+    @TableField(fill = FieldFill.INSERT)
+    private Instant deadLine;
 
-    @TableField(fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updatedAt;
-
-
+    public EmailSms(String email, Integer sms) {
+        this.email = email;
+        this.sms = sms;
+    }
 }

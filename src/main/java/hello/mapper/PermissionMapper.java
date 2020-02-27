@@ -2,13 +2,11 @@ package hello.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import hello.entity.user.Permission;
-import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
 
-@Mapper
 public interface PermissionMapper extends BaseMapper<Permission> {
     @Select("select * from sys_permission")
     List<Permission> findAllPermission();
@@ -22,5 +20,5 @@ public interface PermissionMapper extends BaseMapper<Permission> {
             "    LEFT JOIN sys_permission_role spr on sru.role_id = spr.role_id\n" +
             "    RIGHT JOIN sys_permission sp on spr.permission_id = sp.id\n" +
             "where u.id = #{userId}")
-    List<Permission> findPermissionByUserId(@Param("userId") Integer userId);
+    List<Permission> findPermissionByUserId(@Param("userId") Long userId);
 }
