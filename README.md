@@ -1,6 +1,6 @@
 # 多人在线博客平台
 
-[![Build Status](https://travis-ci.com/zhengbigbig/blogs.svg?branch=master)](https://travis-ci.com/zhengbigbig/blogs)
+[![Build Status](https://travis-ci.com/zhengbigbig/Blogs.svg?branch=master)](https://travis-ci.com/zhengbigbig/Blogs)
 
 ## spring-security-basic branch
 - 掌握spring security自定义配置
@@ -49,5 +49,8 @@ AccessDecisionManager中return是不会被放行的
 
 ## spring-security-jwt-redis 
 1. 引入依赖HuTool对token操作进行封装，包含AES加密解密
+2. 引入```mybatis convert to mybatis-plus```，并集成AutoGenerator自动生成代码，减少重复劳动
+并自定义mybatis-plus handler
+3. 集成```p6spy```，可在控制台查看mybatis日志，可通过日志进行优化分析
 
 

@@ -23,7 +23,7 @@ public class BlogResult extends Result<Blog> implements Serializable {
         return new BlogResult(ResultStatus.OK, msg, null);
     }
 
-    public static BlogResult success(String msg, Blog blog) {
-        return new BlogResult(ResultStatus.OK, msg, blog);
+    public static BlogResult success(String msg, Blog Blog) {
+        return new BlogResult(ResultStatus.OK, msg, Blog);
     }
 }

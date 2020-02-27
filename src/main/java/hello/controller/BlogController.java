@@ -1,60 +1,51 @@
 package hello.controller;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import hello.entity.Blog;
-import hello.entity.result.BlogListResult;
 import hello.entity.result.BlogResult;
-import hello.entity.result.Result;
 import hello.entity.user.User;
-import hello.service.AuthService;
-import hello.service.BlogService;
+import hello.service.impl.AuthServiceImpl;
+import hello.service.impl.BlogServiceImpl;
 import hello.utils.AssertUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
 import java.util.Map;
 
 @Controller
 public class BlogController {
-    private final AuthService authService;
-    private final BlogService blogService;
+    private final AuthServiceImpl authServiceImpl;
+    private final BlogServiceImpl blogService;
 
     @Inject
-    public BlogController(AuthService authService, BlogService blogService) {
-        this.authService = authService;
+    public BlogController(AuthServiceImpl authServiceImpl, BlogServiceImpl blogService) {
+        this.authServiceImpl = authServiceImpl;
         this.blogService = blogService;
     }
 
     @GetMapping("/blog")
     @ResponseBody
-    public BlogListResult getBlogs(@RequestParam("page") Integer page, @RequestParam(value = "userId", required = false) Integer userId) {
-        if (page == null || page < 0) {
-            page = 1;
-        }
-
-        return blogService.getBlogs(page, 10, userId);
+    public IPage<Blog> getBlogs(@RequestParam("page") Integer page,
+                                @RequestParam("pageSize") Integer pageSize,
+                                @RequestParam(value = "userId", required = false) Integer userId) {
+        return blogService.selectBlogListByUserOrAnonymous(page, pageSize, userId);
     }
 
     @GetMapping("/blog/{blogId}")
     @ResponseBody
-    public BlogResult getBlog(@PathVariable("blogId") int blogId) {
-        return blogService.getBlogById(blogId);
+    public Blog getBlog(@PathVariable("blogId") Long blogId) {
+        return blogService.selectBlogById(blogId);
     }
 
     @PostMapping("/blog")
     @ResponseBody
-    public BlogResult newBlog(@RequestBody Map<String, String> param) {
+    public Object newBlog(@RequestBody Blog blog) {
         try {
-            return authService.getCurrentUser()
-                    .map(user -> blogService.insertBlog(fromParam(param, user)))
+            return authServiceImpl.getCurrentUser()
+                    .map(user -> blogService.saveOrUpdateBlog(blog, user.getId()))
+                    .map(blog1 -> BlogResult.success("保存成功", blog))
                     .orElse(BlogResult.failure("登录后才能操作"));
         } catch (IllegalArgumentException e) {
             return BlogResult.failure(e);
@@ -65,8 +56,9 @@ public class BlogController {
     @ResponseBody
     public BlogResult updateBlog(@PathVariable("blogId") int blogId, @RequestBody Map<String, String> param) {
         try {
-            return authService.getCurrentUser()
-                    .map(user -> blogService.updateBlog(blogId, fromParam(param, user)))
+            return authServiceImpl.getCurrentUser()
+                    .map(user -> blogService.saveOrUpdateBlog(fromParam(param, user), user.getId()))
+                    .map(blog -> BlogResult.success("获取成功", blog))
                     .orElse(BlogResult.failure("登录后才能操作"));
         } catch (IllegalArgumentException e) {
             return BlogResult.failure(e);
@@ -75,18 +67,17 @@ public class BlogController {
 
     @DeleteMapping("/blog/{blogId}")
     @ResponseBody
-    public Result deleteBlog(@PathVariable("blogId") int blogId) {
+    public Object deleteBlog(@PathVariable("blogId") Long blogId) {
         try {
-            return authService.getCurrentUser()
-                    .map(user -> blogService.deleteBlog(blogId, user))
-                    .orElse(BlogResult.failure("登录后才能操作"));
+            return authServiceImpl.getCurrentUser()
+                    .map(user -> blogService.deleteBlog(blogId, user.getId()));
         } catch (IllegalArgumentException e) {
             return BlogResult.failure(e);
         }
     }
 
     private Blog fromParam(Map<String, String> params, User user) {
-        Blog blog = new Blog();
+        Blog Blog = new Blog();
         String title = params.get("title");
         String content = params.get("content");
         String description = params.get("description");
@@ -98,10 +89,10 @@ public class BlogController {
             description = content.substring(0, Math.min(content.length(), 10)) + "...";
         }
 
-        blog.setTitle(title);
-        blog.setContent(content);
-        blog.setDescription(description);
-        blog.setUser(user);
-        return blog;
+        Blog.setTitle(title);
+        Blog.setContent(content);
+        Blog.setDescription(description);
+        Blog.setUser(user);
+        return Blog;
     }
 }

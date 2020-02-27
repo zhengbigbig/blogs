@@ -22,7 +22,6 @@
             <if test="profession != null">`profession` = #{profession}</if>
             <if test="address != null">`address` = #{address}</if>
             <if test="technologyStack != null">`technology_stack` = #{technologyStack}</if>
-            <if test="updatedAt != null">`updated_at` = #{updatedAt}</if>
         </set>
         where id = #{id}
     </update>

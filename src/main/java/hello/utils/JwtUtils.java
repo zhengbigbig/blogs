@@ -14,8 +14,9 @@ import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.Map;
 
@@ -34,7 +35,8 @@ public class JwtUtils {
     private static final long EXPIRATION_REMEMBER = 604800L;
 
     // AES密钥
-    public static final byte[] key = "A1B2C3D4E5F6G789".getBytes(Charset.defaultCharset());
+    @SuppressFBWarnings("MS_PKGPROTECT")
+    protected static final byte[] key = "A1B2C3D4E5F6G789".getBytes(StandardCharsets.UTF_8);
 
 
     /* Header头部     { "alg": "Algorithm  加密方法：HS256", "cty": "Content Type ", "typ": "Type" , "kid": "Key Id" }

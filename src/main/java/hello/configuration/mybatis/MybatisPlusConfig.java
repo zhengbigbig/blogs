@@ -1,4 +1,4 @@
-package hello.configuration;
+package hello.configuration.mybatis;
 
 import com.baomidou.mybatisplus.extension.plugins.PaginationInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.pagination.optimize.JsqlParserCountOptimize;
@@ -10,10 +10,11 @@ public class MybatisPlusConfig {
 
     /**
      * 注册分页插件
+     *
      * @return PaginationInterceptor
      */
     @Bean
-    public PaginationInterceptor paginationInterceptor(){
+    public PaginationInterceptor paginationInterceptor() {
         PaginationInterceptor paginationInterceptor = new PaginationInterceptor();
         // 设置请求的页面大于最大页后操作， true调回到首页，false 继续请求  默认false
         // paginationInterceptor.setOverflow(false);

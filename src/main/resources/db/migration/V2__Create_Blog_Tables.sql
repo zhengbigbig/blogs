@@ -1,4 +1,4 @@
-create table blog
+create table Blog
 (
     id          bigint primary key auto_increment,
     user_id     bigint,

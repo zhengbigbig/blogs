@@ -1,5 +1,6 @@
 package hello.entity.user;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -19,7 +20,7 @@ import java.util.List;
 public class User implements Serializable, UserDetails {
 
     private static final long serialVersionUID = -7571859707880852198L;
-    private Integer id;
+    private Long id;
     private String username;
     @JsonIgnore
     private String encryptedPassword;
@@ -34,8 +35,10 @@ public class User implements Serializable, UserDetails {
     private String address;
     private String technologyStack;
     @JsonFormat(pattern = ConstantConfig.DATE_FORMAT_ZH, timezone = ConstantConfig.TIMEZONE)
+    @TableField(fill = FieldFill.INSERT)
     private Instant createdAt;
     @JsonFormat(pattern = ConstantConfig.DATE_FORMAT_ZH, timezone = ConstantConfig.TIMEZONE)
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private Instant updatedAt;
     @TableField(exist = false)
     private List<Role> roles;
@@ -46,16 +49,14 @@ public class User implements Serializable, UserDetails {
     public User() {
     }
 
-    public User(Integer id, String username, String encryptedPassword) {
+    public User(Long id, String username, String encryptedPassword) {
         this.id = id;
         this.username = username;
         this.encryptedPassword = encryptedPassword;
         this.avatar = "";
-        this.createdAt = Instant.now();
-        this.updatedAt = Instant.now();
     }
 
-    public User(Integer id, String username, String encryptedPassword, String email) {
+    public User(Long id, String username, String encryptedPassword, String email) {
         if (id != null) {
             this.id = id;
         }
@@ -63,11 +64,9 @@ public class User implements Serializable, UserDetails {
         this.encryptedPassword = encryptedPassword;
         this.avatar = "";
         this.email = email;
-        this.createdAt = Instant.now();
-        this.updatedAt = Instant.now();
     }
 
-    public static User create(Integer id, String username, String encryptedPassword, String email) {
+    public static User create(Long id, String username, String encryptedPassword, String email) {
         return new User(id, username, encryptedPassword, email);
     }
 

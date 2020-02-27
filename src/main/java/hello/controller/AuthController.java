@@ -5,9 +5,9 @@ import hello.entity.result.NormalResult;
 import hello.entity.result.ObjectResult;
 import hello.entity.result.Result;
 import hello.entity.user.User;
-import hello.service.AuthService;
+import hello.service.impl.AuthServiceImpl;
+import hello.service.impl.EmailSmsServiceImpl;
 import hello.service.impl.UserServiceImpl;
-import hello.utils.ValidateUtils;
 import lombok.extern.java.Log;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.core.Authentication;
@@ -25,14 +25,12 @@ import java.util.Map;
 @Log
 @RestController
 public class AuthController {
-    private final UserServiceImpl userService;
-    private final AuthService authService;
-
     @Inject
-    public AuthController(UserServiceImpl userService, AuthService authService) {
-        this.userService = userService;
-        this.authService = authService;
-    }
+    private UserServiceImpl userService;
+    @Inject
+    private AuthServiceImpl authService;
+    @Inject
+    private EmailSmsServiceImpl emailSmsService;
 
     @Inject
     private FindByIndexNameSessionRepository<? extends Session> sessionRegistry;
@@ -64,7 +62,7 @@ public class AuthController {
     @PostMapping("/auth/sendMail")
     @ResponseBody
     public Result<Object> sendMail(@RequestBody Map<String, String> registerUser) {
-        return userService.sendMailIfSuccessThenSaveSms(registerUser);
+        return emailSmsService.sendMailIfSuccessThenSaveSms(registerUser);
     }
 
     @PostMapping("/auth/register")
@@ -75,15 +73,14 @@ public class AuthController {
         String email = registerUser.get("email");
         String sms = registerUser.get("sms");
 
-        ObjectResult illegalResult = validateRegisterIfIllegal(username, password, email, sms);
+        ObjectResult illegalResult = authService.validateRegisterIfLegalReturnResultOrNull(username, password, email, sms);
         if (illegalResult != null) {
             return illegalResult;
         }
-
         // 本来未考虑到并发同时注册相同用户
         // 现在使用数据库username字段改为unique则直接保存捕获异常然后抛出错误
         try {
-            userService.updateSms(email);
+            emailSmsService.invalidEmailSms(email);
             userService.insert(username, password, email);
             return ObjectResult.success("注册成功!", null);
 
@@ -93,27 +90,6 @@ public class AuthController {
         }
     }
 
-    private ObjectResult validateRegisterIfIllegal(String username, String password, String email, String sms) {
-        if (userService.isUserExist(username)) {
-            return ObjectResult.failure("exist username");
-        }
-
-        if (userService.isUserExist(email)) {
-            return ObjectResult.failure("exist email");
-        }
-
-        if (!ValidateUtils.username(username)) {
-            return ObjectResult.failure("invalid username");
-        }
-        if (!ValidateUtils.password(password)) {
-            return ObjectResult.failure("invalid password");
-        }
-
-        if (!userService.isEqualSms(email, Integer.parseInt(sms))) {
-            return ObjectResult.failure("invalid sms");
-        }
-        return null;
-    }
 
     @GetMapping("/auth/logout")
     @ResponseBody
@@ -139,7 +115,7 @@ public class AuthController {
             return NormalResult.failure("invalid email");
         }
         // 验证验证码是否一致
-        if (!userService.isEqualSms(email, Integer.parseInt(sms))) {
+        if (!emailSmsService.isEqualSms(email, Integer.parseInt(sms))) {
             return NormalResult.failure("invalid sms_code");
         }
         user.setPassword(password);
