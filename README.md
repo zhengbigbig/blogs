@@ -25,6 +25,30 @@ ignore后，导致登录后，再发/xxx请求根本拿不到SecurityContextHold
 AccessDecisionManager中return是不会被放行的
 6. 为了预留多项登录方式，重定义了provider AbstractAuthenticationProcessingFilter等，
 自定义过滤器不要使用@Bean注入，会有bug
+7. 补充
+- 在配置```FilterSecurityInterceptor```时会出现各种各样的问题，什么俩次拦截然后返回error的问题，
+因此网上很多教程都是误人子弟，拦截器或者过滤器添加后并不会覆盖原有，具体可以去看```addFilter```四个方法，只是指定了filterChain的顺序，那要怎么做呢？
+在```HttpSecurity```中并没有提供```FilterSecurityInterceptor```方法，因此，
+需要增加一个扩展方法```withObjectPostProcessor```，来对原有```FilterSecurityInterceptor```进行修改
+- 配置```FilterSecurityInterceptor```后会出现```.antMatchers("/auth/**").permitAll()```为什么还是被拦截了？
+配置如下：
+```java
+    http
+        .authorizeRequests()
+        .antMatchers(securityUrlPermit).permitAll()
+        .withObjectPostProcessor(new ObjectPostProcessor<FilterSecurityInterceptor>() {
+            @Override
+            public <O extends FilterSecurityInterceptor> O postProcess(
+                    O fsi) {
+                fsi.setSecurityMetadataSource(mySecurityMetadataSource(fsi.getSecurityMetadataSource()));
+                return fsi;
+            }
+        })
+```
+这时需要你```fsi.getSecurityMetadataSource()```拿出来然后传入自定义的```FilterInvocationSecurityMetadataSource```
+- 传入之后，在自定义的```FilterInvocationSecurityMetadataSource```的```getAttributes```中，若是放行资源则返回```Collection<ConfigAttribute>```，
+之后```debugger```源码可知，调用了```DefaultFilterInvocationSecurityMetadataSource```进行通配符匹配，匹配成功后放行
+- 你可能想在数据库中定义，只需要将对应url，赋予```ROLE_ANONYMOUS```权限
 
 ## spring-security-redis branch
 1. 引入redis session对session进一步测试，未写完整，后面使用token，只记录思路

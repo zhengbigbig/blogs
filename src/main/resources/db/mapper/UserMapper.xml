@@ -3,22 +3,15 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="hello.mapper.UserMapper">
-    <select id="getUserByUsernameOrEmail" parameterType="string" resultMap="userMap">
-        select u.*,sr.id as role_id, sr.name as name from user u
-        left join sys_role_user sru on u.id = sru.user_id
-        left join sys_role sr on sr.id = sru.role_id
-        ${ew.customSqlSegment}
-    </select>
-
     <update id="updateUser" parameterType="hello.entity.user.User">
         update user
         <set>
-            <if test="username != null">`username` = #{username}, </if>
-            <if test="encryptedPassword != null">`encrypted_password` = #{encryptedPassword}, </if>
-            <if test="avatar != null">`avatar` = #{avatar}, </if>
-            <if test="email != null">`email` = #{email}, </if>
-            <if test="sex != null">`sex` = #{sex}, </if>
-            <if test="summary != null">`summary` = #{summary}, </if>
+            <if test="username != null">`username` = #{username},</if>
+            <if test="encryptedPassword != null">`encrypted_password` = #{encryptedPassword},</if>
+            <if test="avatar != null">`avatar` = #{avatar},</if>
+            <if test="email != null">`email` = #{email},</if>
+            <if test="sex != null">`sex` = #{sex},</if>
+            <if test="summary != null">`summary` = #{summary},</if>
             <if test="profession != null">`profession` = #{profession}</if>
             <if test="address != null">`address` = #{address}</if>
             <if test="technologyStack != null">`technology_stack` = #{technologyStack}</if>

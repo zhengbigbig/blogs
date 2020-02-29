@@ -1,6 +1,5 @@
 package hello.controller;
 
-import com.google.common.collect.ImmutableMap;
 import hello.entity.result.NormalResult;
 import hello.entity.result.ObjectResult;
 import hello.entity.result.Result;
@@ -10,10 +9,10 @@ import hello.service.impl.EmailSmsServiceImpl;
 import hello.service.impl.UserServiceImpl;
 import lombok.extern.java.Log;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.session.FindByIndexNameSessionRepository;
-import org.springframework.session.Session;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
@@ -31,23 +30,20 @@ public class AuthController {
     private AuthServiceImpl authService;
     @Inject
     private EmailSmsServiceImpl emailSmsService;
-
     @Inject
-    private FindByIndexNameSessionRepository<? extends Session> sessionRegistry;
-
+    private StringRedisTemplate redisTemplate;
 
     // TEST SESSION 从redis中找用户session
     @GetMapping("/auth/login")
     @ResponseBody
-    public ObjectResult findByUsername(HttpSession httpSession, Principal principal) {
-        Session session = sessionRegistry.findById(httpSession.getId());
+    public Object findByUsername(HttpSession httpSession, Principal principal) {
         // 获得详细信息
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication.getPrincipal().equals("anonymousUser")) {
             return ObjectResult.failure("登录失败");
         }
         User user = (User) authentication.getPrincipal();
-        return ObjectResult.success("登录成功", ImmutableMap.of("user", user, "session", session));
+        return user;
     }
 
 
@@ -126,5 +122,13 @@ public class AuthController {
         }
     }
 
+    @GetMapping("/auth/test")
+    @ResponseBody
+    public void test() {
+        ValueOperations ops = redisTemplate.opsForValue();
+        ops.set("k2","v1");
+        Object k1 = ops.get("k2");
+        System.out.println(k1);
+    }
 
 }
