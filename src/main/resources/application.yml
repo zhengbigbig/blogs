@@ -18,14 +18,11 @@ spring:
           starttls:
             enable: true
             required: true
-# mybatis
-#mybatis:
-#  config-location: classpath:db/mybatis/mybatis_config.xml
 
 # 配置slq打印日志
 mybatis-plus:
   # 自定义xml文件路径
-  mapper-locations: classpath:db/mapper/*Mapper.xml
+  mapper-locations: classpath:/db/mapper/*Mapper.xml
   # 自定义xml文件中用到的实体类路径
   type-aliases-package: hello.entity
   configuration:
@@ -36,3 +33,4 @@ mybatis-plus:
     call-setters-on-nulls: true
     # sql日志打印
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    jdbc-type-for-null: 'null'

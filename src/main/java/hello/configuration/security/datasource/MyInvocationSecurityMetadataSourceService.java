@@ -1,7 +1,7 @@
 package hello.configuration.security.datasource;
 
-import hello.mapper.PermissionMapper;
 import hello.entity.user.Permission;
+import hello.mapper.PermissionMapper;
 import lombok.extern.java.Log;
 import org.springframework.security.access.ConfigAttribute;
 import org.springframework.security.access.SecurityConfig;
@@ -9,18 +9,21 @@ import org.springframework.security.web.FilterInvocation;
 import org.springframework.security.web.access.intercept.FilterInvocationSecurityMetadataSource;
 import org.springframework.util.AntPathMatcher;
 
+import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 
 // 用来储存请求与权限的对应关系
 @Log
 public class MyInvocationSecurityMetadataSourceService implements FilterInvocationSecurityMetadataSource {
-    private PermissionMapper permissionMapper;
     private final AntPathMatcher antPathMatcher = new AntPathMatcher();
     private HashMap<String, Collection<ConfigAttribute>> allUrlRoleMap = null;
+    private FilterInvocationSecurityMetadataSource superMetadataSource;
+    @Inject
+    private PermissionMapper permissionMapper;
 
-    public MyInvocationSecurityMetadataSourceService(PermissionMapper permissionMapper) {
-        this.permissionMapper = permissionMapper;
+    public MyInvocationSecurityMetadataSourceService(FilterInvocationSecurityMetadataSource superMetadataSource) {
+        this.superMetadataSource = superMetadataSource;
     }
 
     /*
@@ -57,13 +60,13 @@ public class MyInvocationSecurityMetadataSourceService implements FilterInvocati
      */
     @Override
     public Collection<ConfigAttribute> getAttributes(Object object) throws IllegalArgumentException {
-
+        // TODO 加载数据库所有权限，当然可以只加载一个
         if (allUrlRoleMap == null) {
             loadAllPermissionResource();
         }
 
-        HttpServletRequest request = ((FilterInvocation) object).getRequest();
-        String url = request.getRequestURI();
+        FilterInvocation fi = (FilterInvocation) object;
+        String url = fi.getRequestUrl();
 
         for (Map.Entry<String, Collection<ConfigAttribute>> entry : allUrlRoleMap.entrySet()) {
             if (antPathMatcher.match(entry.getKey(), url)) {
@@ -71,14 +74,15 @@ public class MyInvocationSecurityMetadataSourceService implements FilterInvocati
             }
         }
 
-        // 没有匹配到,默认是要登录才能访问
-        return SecurityConfig.createList("ROLE_LOGIN");
+        //  返回代码定义的默认配置
+        return superMetadataSource.getAttributes(object);
     }
 
     // Spring容器启动时自动调用, 一般把所有请求与权限的对应关系也要在这个方法里初始化, 保存在一个属性变量里
+    // 默认配置
     @Override
     public Collection<ConfigAttribute> getAllConfigAttributes() {
-        return new ArrayList<>();
+        return null;
     }
 
     // 指示该类是否能够为指定的方法调用或Web请求提供
@@ -87,4 +91,6 @@ public class MyInvocationSecurityMetadataSourceService implements FilterInvocati
         return FilterInvocation.class.isAssignableFrom(clazz);
 
     }
+
+
 }

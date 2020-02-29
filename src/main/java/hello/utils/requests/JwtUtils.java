@@ -1,11 +1,10 @@
-package hello.utils;
+package hello.utils.requests;
 
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.CharsetUtil;
 import cn.hutool.crypto.Mode;
 import cn.hutool.crypto.Padding;
 import cn.hutool.crypto.symmetric.AES;
-import cn.hutool.json.JSONObject;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
@@ -15,10 +14,13 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class JwtUtils {
 
@@ -28,10 +30,10 @@ public class JwtUtils {
     private static final String SECRET = "zbbIsSuperman";
     private static final String ISS = "zbb";
 
-    // 过期时间  1天
-    private static final int EXPIRATION = 1;
+    // 过期时间  1小时
+    private static final long EXPIRATION = 3600L;
 
-    // 选择了记住我之后的过期时间为7天
+    // 选择了记住我之后的过期
     private static final long EXPIRATION_REMEMBER = 604800L;
 
     // AES密钥
@@ -52,20 +54,31 @@ public class JwtUtils {
      */
 
     /**
-     * @param json 将参数放入token，可以封装成json或Map
+     * @param userDetails 存放username和权限信息，不存隐私
      * @return token
      */
-    public static String createToken(JSONObject json) {
+    public static String createToken(UserDetails userDetails, boolean isRememberMe, int second) {
         try {
+            String authorities = userDetails.getAuthorities()
+                    .stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .collect(Collectors.joining(":"));
+
+            long expiration;
+            if (second > 0) {
+                expiration = second;
+            } else {
+                expiration = isRememberMe ? EXPIRATION_REMEMBER : EXPIRATION;
+            }
             Algorithm algorithm = Algorithm.HMAC256(SECRET);
             return JWT.create()
-                    .withSubject(json.toString())
+                    .withSubject(userDetails.getUsername())
                     // 签名者,签名防止数据被篡改
                     .withIssuer(ISS)
                     // 设置过期时间
-                    .withExpiresAt(DateUtil.offsetDay(new Date(), EXPIRATION))
+                    .withExpiresAt(DateUtil.offsetMillisecond(new Date(), (int) (expiration * 1000)))
                     // 自定义参数，暂时不用
-//                    .withClaim("customString", "自定义参数")
+                    .withClaim("authorities", authorities)
                     .sign(algorithm);
         } catch (JWTCreationException exception) {
             System.out.println(exception.getMessage());
@@ -79,62 +92,47 @@ public class JwtUtils {
      * @param token token
      * @return boolean
      */
-    public static boolean verifyToken(String token) {
-        try {
-            Algorithm algorithm = Algorithm.HMAC256(SECRET);
-            JWTVerifier verifier = JWT.require(algorithm)
-                    // 验证签发人
-                    .withIssuer(ISS)
-                    .build();
-            /*
-             *   校验：
-             * 格式校验： header.payload.signature
-             * 加密方式校验 Header中的alg
-             * 签名信息校验，防篡改
-             * 载体payload 公有声明字段校验
-             */
-            verifier.verify(token);
-            Object o = decodeToken(token, TOKEN_PARAMETER.DATE);
-            if (o instanceof Date && ((Date) o).before(new Date())) {
-                return true;
-            }
-            return false;
-        } catch (JWTVerificationException exception) {
-            System.out.println(exception.getMessage());
-            return false;
-        }
+    public static DecodedJWT verifyToken(String token) throws JWTVerificationException {
+        Algorithm algorithm = Algorithm.HMAC256(SECRET);
+        JWTVerifier verifier = JWT.require(algorithm)
+                // 验证签发人
+                .withIssuer(ISS)
+                .build();
+        /*
+         *   校验：
+         * 格式校验： header.payload.signature
+         * 加密方式校验 Header中的alg
+         * 签名信息校验，防篡改
+         * 载体payload 公有声明字段校验
+         */
+        return verifier.verify(token);
     }
 
     /**
      * 解码
      */
     public enum TOKEN_PARAMETER {
-        ISSUER, SUBJECT, DATE, CUSTOM
+        ISSUER, SUBJECT, EXPIRATION, CUSTOM
     }
 
-    public static Object decodeToken(String token, TOKEN_PARAMETER parameter) {
-        try {
-            DecodedJWT jwt = JWT.decode(token);
-            Map<String, Claim> claims = jwt.getClaims();
-            Claim customString = claims.get("customString");
-            String issuer = jwt.getIssuer();
-            String subject = jwt.getSubject();
-            Date expiresAt = jwt.getExpiresAt();
-            switch (parameter) {
-                case ISSUER:
-                    return issuer;
-                case SUBJECT:
-                    return subject;
-                case DATE:
-                    return expiresAt;
-                case CUSTOM:
-                    return customString;
-                default:
-                    return "";
-            }
-        } catch (JWTDecodeException exception) {
-            System.out.println(exception.getMessage());
-            return "";
+    public static Object decodeToken(String token, TOKEN_PARAMETER parameter) throws JWTDecodeException {
+        DecodedJWT jwt = JWT.decode(token);
+        Map<String, Claim> claims = jwt.getClaims();
+        Claim authorities = claims.get("authorities");
+        String issuer = jwt.getIssuer();
+        String subject = jwt.getSubject();
+        Date expiresAt = jwt.getExpiresAt();
+        switch (parameter) {
+            case ISSUER:
+                return issuer;
+            case SUBJECT:
+                return subject;
+            case EXPIRATION:
+                return expiresAt;
+            case CUSTOM:
+                return authorities.asString();
+            default:
+                return "";
         }
     }
 

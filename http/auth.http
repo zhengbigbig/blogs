@@ -23,13 +23,15 @@ Accept: application/json
 
 { "username":"{{username}}", "password":"{{password}}" }
 
+> {% client.global.set("token", response.headers.valueOf("token")) %}
+
 ###退出
 GET http://{{host}}:{{port}}/logout
 Content-Type: application/json
 Accept: application/json
 
 ###当前用户
-GET http://{{host}}:{{port}}/auth/currentUser
+GET http://{{host}}:{{port}}/auth
 Content-Type: application/json
 Accept: application/json
 
