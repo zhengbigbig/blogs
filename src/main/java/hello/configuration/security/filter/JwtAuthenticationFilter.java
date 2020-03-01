@@ -1,7 +1,9 @@
 package hello.configuration.security.filter;
 
+import cn.hutool.core.util.ArrayUtil;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import hello.configuration.security.provider.token.JwtAuthenticationToken;
+import hello.utils.SystemPropertiesEnv;
 import hello.utils.requests.JwtUtils;
 import lombok.extern.java.Log;
 import org.apache.commons.lang3.StringUtils;
@@ -15,6 +17,7 @@ import org.springframework.security.web.authentication.AuthenticationFailureHand
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -33,12 +36,11 @@ import java.util.List;
  */
 @Log
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-    private List<RequestMatcher> permissiveRequestMatchers;
     private AuthenticationManager authenticationManager;
 
     private AuthenticationSuccessHandler successHandler = new SavedRequestAwareAuthenticationSuccessHandler();
     private AuthenticationFailureHandler failureHandler = new SimpleUrlAuthenticationFailureHandler();
-
+    private SystemPropertiesEnv systemPropertiesEnv;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException {
@@ -112,18 +114,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         this.authenticationManager = authenticationManager;
     }
 
-    protected boolean permissiveRequest(HttpServletRequest request) {
-        if (permissiveRequestMatchers == null)
-            return false;
-        for (RequestMatcher permissiveMatcher : permissiveRequestMatchers) {
-            if (permissiveMatcher.matches(request))
-                return true;
-        }
-        return false;
+    @Inject
+    public void setSystemPropertiesEnv(SystemPropertiesEnv systemPropertiesEnv) {
+        this.systemPropertiesEnv = systemPropertiesEnv;
     }
 
-    public void setPermissiveUrl(List<RequestMatcher> requestMatchers) {
-        this.permissiveRequestMatchers = requestMatchers;
+    protected boolean permissiveRequest(HttpServletRequest request) {
+        String[] securityPermit = systemPropertiesEnv.getSecurityPermit();
+        if (ArrayUtil.isEmpty(securityPermit)) {
+            return false;
+        } else {
+            for (String url : securityPermit) {
+                AntPathRequestMatcher antPathRequestMatcher = new AntPathRequestMatcher(url);
+                if (antPathRequestMatcher.matches(request)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public void setAuthenticationSuccessHandler(

@@ -1,5 +1,6 @@
 package hello.configuration;
 
+import cn.hutool.core.util.ArrayUtil;
 import hello.configuration.security.interceptor.MyInvocationSecurityMetadataSourceService;
 import hello.configuration.security.interceptor.RoleBasedVoter;
 import hello.configuration.security.FilterConfig;
@@ -8,6 +9,9 @@ import hello.configuration.security.exceptionhander.SimpleAccessDeniedHandler;
 import hello.configuration.security.exceptionhander.SimpleAuthenticationEntryPoint;
 import hello.configuration.security.provider.JwtAuthenticationProvider;
 import hello.service.impl.UserServiceImpl;
+import hello.utils.SystemPropertiesEnv;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.java.Log;
 import org.springframework.boot.web.servlet.ServletComponentScan;
 import org.springframework.context.annotation.Bean;
@@ -57,17 +61,15 @@ import java.util.List;
 @Log
 @Configuration
 @EnableWebSecurity
-@PropertySource("classpath:/system.properties")
+@ServletComponentScan
 //@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
-    private final String[] ignoredWebURI = {
+    private String[] ignoredWebURI = {
             "/", "/index.html", "/error/**", "/static/**", // 静态资源
             "/js/**", "/css/**", "/fonts/**"
     };
 
-    private String webIgnore;
-
-    private final String[] securityUrlPermit = {
+    private String[] securityUrlPermit = {
             "/auth/**", "/favicon.ico", "/user/**"
     };
     @Inject
@@ -128,13 +130,14 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     }
 
-    @Bean
-    public void securityUrlPermit(){
-        log.info(webIgnore);
-    }
+//    @Bean
+//    public SystemPropertiesEnv systemPropertiesEnv(){
+//        return new SystemPropertiesEnv();
+//    }
 
     /**
      * 鉴权
+     *
      * @return AuthenticationManager
      * @throws Exception NullException
      */

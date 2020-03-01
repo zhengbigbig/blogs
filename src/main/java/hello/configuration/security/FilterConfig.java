@@ -31,8 +31,6 @@ public class FilterConfig extends SecurityConfigurerAdapter<DefaultSecurityFilte
     @Inject
     private UserServiceImpl userService;
 
-    private List<RequestMatcher> requestMatchers;
-
     @Override
     public void configure(HttpSecurity builder) throws Exception {
         builder
@@ -48,7 +46,6 @@ public class FilterConfig extends SecurityConfigurerAdapter<DefaultSecurityFilte
         // 使用自带的manager
         filter.setAuthenticationSuccessHandler(jwtRefreshSuccessHandler());
         filter.setAuthenticationFailureHandler(new CustomLoginFailureHandler());
-        filter.setPermissiveUrl(requestMatchers);
         return filter;
     }
 
@@ -70,14 +67,5 @@ public class FilterConfig extends SecurityConfigurerAdapter<DefaultSecurityFilte
     @Bean
     protected JwtAuthenticationSuccessHandler jwtRefreshSuccessHandler() {
         return new JwtAuthenticationSuccessHandler();
-    }
-
-
-    public void setRequestMatchers(String... urls) {
-        for (String url : urls) {
-            List<RequestMatcher> matchers = new ArrayList<>();
-            matchers.add(new AntPathRequestMatcher(url));
-            this.requestMatchers = matchers;
-        }
     }
 }
