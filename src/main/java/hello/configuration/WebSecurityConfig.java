@@ -1,20 +1,20 @@
 package hello.configuration;
 
-import hello.configuration.security.datasource.MyInvocationSecurityMetadataSourceService;
-import hello.configuration.security.datasource.RoleBasedVoter;
-import hello.configuration.security.handler.*;
-import hello.configuration.security.interceptor.JwtAuthenticationFilter;
-import hello.configuration.security.interceptor.JwtLoginFilter;
+import hello.configuration.security.interceptor.MyInvocationSecurityMetadataSourceService;
+import hello.configuration.security.interceptor.RoleBasedVoter;
+import hello.configuration.security.FilterConfig;
+import hello.configuration.security.handler.CustomLogoutHandler;
+import hello.configuration.security.exceptionhander.SimpleAccessDeniedHandler;
+import hello.configuration.security.exceptionhander.SimpleAuthenticationEntryPoint;
 import hello.configuration.security.provider.JwtAuthenticationProvider;
 import hello.service.impl.UserServiceImpl;
 import lombok.extern.java.Log;
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.boot.web.servlet.ServletComponentScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.security.access.AccessDecisionManager;
 import org.springframework.security.access.AccessDecisionVoter;
-import org.springframework.security.access.vote.AffirmativeBased;
 import org.springframework.security.access.vote.AuthenticatedVoter;
 import org.springframework.security.access.vote.UnanimousBased;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -30,10 +30,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.access.expression.WebExpressionVoter;
 import org.springframework.security.web.access.intercept.FilterInvocationSecurityMetadataSource;
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
-import org.springframework.security.web.authentication.logout.LogoutFilter;
-import org.springframework.security.web.authentication.session.NullAuthenticatedSessionStrategy;
 import org.springframework.security.web.header.Header;
 import org.springframework.security.web.header.writers.StaticHeadersWriter;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -58,7 +57,7 @@ import java.util.List;
 @Log
 @Configuration
 @EnableWebSecurity
-@ServletComponentScan
+@PropertySource("classpath:/system.properties")
 //@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     private final String[] ignoredWebURI = {
@@ -66,11 +65,16 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
             "/js/**", "/css/**", "/fonts/**"
     };
 
+    private String webIgnore;
+
     private final String[] securityUrlPermit = {
             "/auth/**", "/favicon.ico", "/user/**"
     };
     @Inject
     private UserServiceImpl userService;
+
+    @Inject
+    private FilterConfig filterConfig;
 
     // 避免自定义过滤器交给spring，否则失效
     @Override
@@ -81,11 +85,16 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
-                // csrf默认是开启的，会导致访问403，需要先关闭，一种跨站请求伪造，对post有效
+                .apply(filterConfig);
+//                .setRequestMatchers(securityUrlPermit);
+        // csrf默认是开启的，会导致访问403，需要先关闭，一种跨站请求伪造，对post有效
+        http
                 .csrf().disable()
                 .sessionManagement().disable()  //禁用session
                 .formLogin().disable() //禁用form登录
-                .cors() //添加跨域配置，在返回头上添加如下
+                .exceptionHandling()
+                .accessDeniedHandler(new SimpleAccessDeniedHandler())
+                .authenticationEntryPoint(new SimpleAuthenticationEntryPoint())
                 .and()
                 .authorizeRequests()
                 // ExpressionUrlAuthorizationConfigurer没有提供FilterSecurityInterceptor的set方法
@@ -104,79 +113,40 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .accessDecisionManager(accessDecisionManager())
                 .anyRequest().authenticated() // 默认其他的认证
                 .and()
+                .cors() //添加跨域配置，在返回头上添加如下
+                .and()
                 .headers().addHeaderWriter(new StaticHeadersWriter(Arrays.asList(
                 new Header("Access-control-Allow-Origin", "*"),
                 new Header("Access-Control-Expose-Headers", "Authorization"))))
                 .and() //拦截OPTIONS请求，直接返回header
 //                .addFilterAfter(new OptionsRequestFilter(), CorsFilter.class)
-                // 添加登录过滤器
-//                .apply(new JsonLoginConfigurer<>()).loginSuccessHandler(jsonLoginSuccessHandler())
-                // 添加token的过滤器
-//                .and()
-//                .apply(new JwtLoginConfigurer<>()).tokenValidSuccessHandler(jwtRefreshSuccessHandler()).permissiveRequestUrls("/logout")
-                // 401 403 处理
-//                .and()
-                .exceptionHandling()
-                .accessDeniedHandler(new SimpleAccessDeniedHandler())
-                .authenticationEntryPoint(new SimpleAuthenticationEntryPoint())
-                .and()
+
                 //使用默认的logoutFilter
                 .logout()
                 .logoutUrl(ConstantConfig.WEB_URL.LOGOUT.getUrl())
-                .addLogoutHandler(new CustomLogoutHandler())
-                // session
-                .and()
-                .sessionManagement().disable();
-    }
+                .addLogoutHandler(new CustomLogoutHandler());
 
-
-    @Bean
-    public FilterRegistrationBean jwtLoginFilter() throws Exception {
-        FilterRegistrationBean registrationBean = new FilterRegistrationBean();
-        JwtLoginFilter filter = new JwtLoginFilter();
-        // 使用自带的manager
-        filter.setAuthenticationManager(authenticationManagerBean());
-        filter.setAuthenticationFailureHandler(new HttpStatusLoginFailureHandler());
-        filter.setSessionAuthenticationStrategy(new NullAuthenticatedSessionStrategy());
-        filter.setAuthenticationSuccessHandler(new JsonLoginSuccessHandler(userService));
-        getHttp().addFilterAfter(filter, LogoutFilter.class);
-        registrationBean.setFilter(filter);
-//        registrationBean.addUrlPatterns("*.json");//配置过滤规则
-//        registrationBean.setUrlPatterns();
-        registrationBean.addInitParameter("excludeUrls", "hahahhhaa");//设置init参数
-        registrationBean.setName("securityFilter1");//设置过滤器名称
-//        registrationBean.setOrder(0);//执行次序
-        return registrationBean;
     }
 
     @Bean
-    public FilterRegistrationBean jwtAuthenticationFilter() throws Exception {
-        FilterRegistrationBean registrationBean = new FilterRegistrationBean();
-        JwtAuthenticationFilter filter = new JwtAuthenticationFilter();
-        // 使用自带的manager
-        filter.setAuthenticationManager(authenticationManagerBean());
-        filter.setAuthenticationSuccessHandler(jwtRefreshSuccessHandler());
-        filter.setAuthenticationFailureHandler(new HttpStatusLoginFailureHandler());
-        filter.setPermissiveUrl(securityUrlPermit);
-        getHttp().addFilterBefore(filter, LogoutFilter.class);
-        registrationBean.setFilter(filter);
-//        registrationBean.addUrlPatterns("*.json");//配置过滤规则
-//        registrationBean.setUrlPatterns();
+    public void securityUrlPermit(){
+        log.info(webIgnore);
+    }
 
-        registrationBean.setName("securityFilter2");//设置过滤器名称
-//        registrationBean.setOrder(0);//执行次序
-        return registrationBean;
+    /**
+     * 鉴权
+     * @return AuthenticationManager
+     * @throws Exception NullException
+     */
+    @Bean
+    public AuthenticationManager authenticationManagerBean() throws Exception {
+        return super.authenticationManagerBean();
     }
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
         auth.authenticationProvider(daoAuthenticationProvider())
                 .authenticationProvider(jwtAuthenticationProvider());
-    }
-
-    @Bean
-    public AuthenticationManager authenticationManagerBean() throws Exception {
-        return super.authenticationManagerBean();
     }
 
     @Bean("jwtAuthenticationProvider")
@@ -193,18 +163,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         daoProvider.setUserDetailsService(userService);
         return daoProvider;
     }
-
-
-    @Bean
-    protected JsonLoginSuccessHandler jsonLoginSuccessHandler() {
-        return new JsonLoginSuccessHandler(userService);
-    }
-
-    @Bean
-    protected JwtRefreshSuccessHandler jwtRefreshSuccessHandler() {
-        return new JwtRefreshSuccessHandler();
-    }
-
 
     // 对存储到数据库的密码进行加密
     @Bean

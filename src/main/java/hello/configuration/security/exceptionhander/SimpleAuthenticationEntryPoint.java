@@ -1,4 +1,4 @@
-package hello.configuration.security.handler;
+package hello.configuration.security.exceptionhander;
 
 import hello.utils.requests.RequestUtils;
 import org.springframework.security.core.AuthenticationException;

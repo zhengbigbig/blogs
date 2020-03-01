@@ -1,15 +1,5 @@
 package hello.configuration.security.handler;
 
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Date;
-
-import javax.inject.Inject;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import hello.configuration.security.provider.token.JwtAuthenticationToken;
 import hello.service.impl.UserServiceImpl;
 import hello.utils.requests.JwtUtils;
@@ -17,15 +7,23 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 
+import javax.inject.Inject;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 
 import static hello.utils.requests.JwtUtils.TOKEN_PARAMETER.EXPIRATION;
 import static hello.utils.requests.JwtUtils.TOKEN_PREFIX;
 
-public class JwtRefreshSuccessHandler implements AuthenticationSuccessHandler {
+public class JwtAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
 
     private static final int tokenRefreshInterval = 300;  //刷新间隔5分钟
 
-	@Inject
+    @Inject
     private UserServiceImpl userService;
 
 
@@ -41,7 +39,7 @@ public class JwtRefreshSuccessHandler implements AuthenticationSuccessHandler {
             // 删除redis中的，再重新创建，若是多端，则逻辑重写
             userService.deleteUserLoginInfoToRedis(principal.getUsername());
             String newToken = userService.saveUserLoginToRedis(principal);
-            response.setHeader("Authorization",TOKEN_PREFIX + newToken);
+            response.setHeader("Authorization", TOKEN_PREFIX + newToken);
         }
     }
 

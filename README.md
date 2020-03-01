@@ -103,3 +103,9 @@ AccessDecisionManager中return是不会被放行的
 这里未设置，则会弃权 
 自定义中```RoleBasedVoter```，因为访问的```/auth```是permitAll，没有定义权限，则会直接弃权，当然，可以自定义
 这里我们使用 ```UnanimousBased```，也就是一票否决，俩个弃权，一个通过，结果为通过
+- 上述情况：若设置了对```/xxx```url的权限有多个，若当前用户权限没有全部匹配，使用```UnanimousBased```将会被否决
+9. 对比jwt和session，session需要考虑csrf攻击，对于用户在线管理等需求，session管理确实更方便。
+但jwt仍然可以通过数据库或者redis来进行token的管理，配合前端来进行session的管理，
+譬如在退出浏览器时，监听```window.οnbefοreunlοad```调用logout等清理token的接口，
+防止xss攻击，适当选用前端框架即可避免，譬如```react```等等
+10. 对代码进行重构，对配置进行抽离解耦，可以使用```FilterRegistrationBean```或者```extends SecurityConfigurerAdapter<DefaultSecurityFilterChain, HttpSecurity>```

@@ -1,4 +1,4 @@
-package hello.configuration.cors;
+package hello.configuration.security.cors;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -15,10 +15,10 @@ import java.util.Map;
 
 import static hello.utils.requests.JwtUtils.TOKEN_PREFIX;
 
-public class JsonLoginSuccessHandler implements AuthenticationSuccessHandler {
+public class CustomLoginSuccessHandler implements AuthenticationSuccessHandler {
     private UserServiceImpl userService;
 
-    public JsonLoginSuccessHandler(UserServiceImpl userService) {
+    public CustomLoginSuccessHandler(UserServiceImpl userService) {
         this.userService = userService;
     }
 

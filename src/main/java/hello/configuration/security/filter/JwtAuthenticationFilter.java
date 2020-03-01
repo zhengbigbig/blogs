@@ -1,4 +1,4 @@
-package hello.configuration.security.interceptor;
+package hello.configuration.security.filter;
 
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import hello.configuration.security.provider.token.JwtAuthenticationToken;
@@ -8,31 +8,24 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-import org.springframework.security.web.util.matcher.RequestHeaderRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import javax.servlet.Filter;
+import javax.inject.Inject;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Created by zhengzhiheng on 2020/2/28 1:38 下午
@@ -46,11 +39,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private AuthenticationSuccessHandler successHandler = new SavedRequestAwareAuthenticationSuccessHandler();
     private AuthenticationFailureHandler failureHandler = new SimpleUrlAuthenticationFailureHandler();
 
-//    @Override
-//    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-//        return super.shouldNotFilter(request);
-////        return true;
-//    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException {
@@ -70,26 +58,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             JwtAuthenticationToken authToken = new JwtAuthenticationToken(token);
-            authResult =this.authenticationManager.authenticate(authToken);
+            authResult = this.authenticationManager.authenticate(authToken);
 
-        } catch(JWTVerificationException e) {
+        } catch (JWTVerificationException e) {
             log.info("JWT format error :" + e.getMessage());
             failed = new InsufficientAuthenticationException("JWT format error", e);
-        }catch (InternalAuthenticationServiceException e) {
+        } catch (InternalAuthenticationServiceException e) {
             log.info("An internal error occurred while trying to authenticate the user. :" + e.getMessage());
             failed = e;
-        }catch (AuthenticationException e) {
+        } catch (AuthenticationException e) {
             // Authentication failed
             failed = e;
         }
-        if(authResult != null) {
+        if (authResult != null) {
             successfulAuthentication(request, response, filterChain, authResult);
             // 如果验证未通过，譬如无效的token，但有些接口无需权限的，可以直接判断后转给下一个过滤器
             // 这里仅做思路，因为我们有了WebExpressionVoter可以投票出HttpSecurity中ExpressionUrlAuthorizationConfigurer
             // 下面判断可省略，后续，若想对过滤器进行制定验证，通过getter和setter将参数传入了做校验
-        } else if(!permissiveRequest(request)){
+        } else if (!permissiveRequest(request)) {
             unsuccessfulAuthentication(request, response, failed);
-            return;
         }
 
         filterChain.doFilter(request, response);
@@ -115,35 +102,28 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     protected void successfulAuthentication(HttpServletRequest request,
                                             HttpServletResponse response, FilterChain chain, Authentication authResult)
-            throws IOException, ServletException{
+            throws IOException, ServletException {
         SecurityContextHolder.getContext().setAuthentication(authResult);
         successHandler.onAuthenticationSuccess(request, response, authResult);
     }
 
-    protected AuthenticationManager getAuthenticationManager() {
-        return authenticationManager;
-    }
-
+    @Inject
     public void setAuthenticationManager(AuthenticationManager authenticationManager) {
         this.authenticationManager = authenticationManager;
     }
 
-
     protected boolean permissiveRequest(HttpServletRequest request) {
-        if(permissiveRequestMatchers == null)
+        if (permissiveRequestMatchers == null)
             return false;
-        for(RequestMatcher permissiveMatcher : permissiveRequestMatchers) {
-            if(permissiveMatcher.matches(request))
+        for (RequestMatcher permissiveMatcher : permissiveRequestMatchers) {
+            if (permissiveMatcher.matches(request))
                 return true;
         }
         return false;
     }
 
-    public void setPermissiveUrl(String... urls) {
-        if(permissiveRequestMatchers == null)
-            permissiveRequestMatchers = new ArrayList<>();
-        for(String url : urls)
-            permissiveRequestMatchers .add(new AntPathRequestMatcher(url));
+    public void setPermissiveUrl(List<RequestMatcher> requestMatchers) {
+        this.permissiveRequestMatchers = requestMatchers;
     }
 
     public void setAuthenticationSuccessHandler(
@@ -157,13 +137,4 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         Assert.notNull(failureHandler, "failureHandler cannot be null");
         this.failureHandler = failureHandler;
     }
-
-    protected AuthenticationSuccessHandler getSuccessHandler() {
-        return successHandler;
-    }
-
-    protected AuthenticationFailureHandler getFailureHandler() {
-        return failureHandler;
-    }
-
 }

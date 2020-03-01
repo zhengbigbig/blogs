@@ -1,4 +1,4 @@
-package hello.configuration.security.interceptor;
+package hello.configuration.security.cors;
 
 import org.springframework.web.filter.OncePerRequestFilter;
 

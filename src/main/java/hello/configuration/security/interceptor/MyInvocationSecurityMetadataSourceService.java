@@ -1,4 +1,4 @@
-package hello.configuration.security.datasource;
+package hello.configuration.security.interceptor;
 
 import hello.entity.user.Permission;
 import hello.mapper.PermissionMapper;
@@ -89,8 +89,5 @@ public class MyInvocationSecurityMetadataSourceService implements FilterInvocati
     @Override
     public boolean supports(Class<?> clazz) {
         return FilterInvocation.class.isAssignableFrom(clazz);
-
     }
-
-
 }
