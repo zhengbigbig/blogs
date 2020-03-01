@@ -54,7 +54,7 @@ public class UserController {
                 i -> i.eq("username", username)
                         .or().eq("email", username)
         );
-        return userMapper.getUserByUsernameOrEmail(query);
+        return userMapper.selectOne(query);
     }
 
     @GetMapping("/findPage")

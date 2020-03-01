@@ -5,6 +5,7 @@ import com.auth0.jwt.interfaces.DecodedJWT;
 import hello.configuration.security.provider.token.JwtAuthenticationToken;
 import hello.service.impl.UserServiceImpl;
 import hello.utils.requests.JwtUtils;
+import lombok.extern.java.Log;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
@@ -13,7 +14,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.www.NonceExpiredException;
 
 import java.util.Date;
-
+@Log
 public class JwtAuthenticationProvider implements AuthenticationProvider {
     private UserServiceImpl userService;
 
@@ -26,17 +27,14 @@ public class JwtAuthenticationProvider implements AuthenticationProvider {
         String token = ((JwtAuthenticationToken) authentication).getToken();
 
         DecodedJWT jwt;
-        // 校验并返回解析结果
+        // 校验并返回解析结果 验证时效
         try {
             jwt = JwtUtils.verifyToken(token);
         } catch (JWTVerificationException e) {
-            throw new BadCredentialsException("JWT token verify fail", e);
+            log.info(e.getMessage());
+            throw new BadCredentialsException("JWT token verify result: invalid", e);
         }
-        // 验证时效
-        Date expiresAt = jwt.getExpiresAt();
-        if (expiresAt.before(new Date())) {
-            throw new NonceExpiredException("Token expires");
-        }
+
         // 验证用户
         String username = jwt.getSubject();
         String tokenFromRedis = userService.getUserLoginInfoForRedis(username);

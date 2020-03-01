@@ -3,6 +3,7 @@ package hello.configuration;
 import hello.configuration.security.datasource.MyInvocationSecurityMetadataSourceService;
 import hello.configuration.security.datasource.RoleBasedVoter;
 import hello.configuration.security.handler.*;
+import hello.configuration.security.interceptor.JwtAuthenticationFilter;
 import hello.configuration.security.interceptor.JwtLoginFilter;
 import hello.configuration.security.provider.JwtAuthenticationProvider;
 import hello.service.impl.UserServiceImpl;
@@ -13,6 +14,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.access.AccessDecisionManager;
 import org.springframework.security.access.AccessDecisionVoter;
+import org.springframework.security.access.vote.AffirmativeBased;
 import org.springframework.security.access.vote.AuthenticatedVoter;
 import org.springframework.security.access.vote.UnanimousBased;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -24,7 +26,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.access.expression.WebExpressionVoter;
 import org.springframework.security.web.access.intercept.FilterInvocationSecurityMetadataSource;
@@ -82,7 +83,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         http
                 // csrf默认是开启的，会导致访问403，需要先关闭，一种跨站请求伪造，对post有效
                 .csrf().disable()
-
+                .sessionManagement().disable()  //禁用session
+                .formLogin().disable() //禁用form登录
+                .cors() //添加跨域配置，在返回头上添加如下
+                .and()
                 .authorizeRequests()
                 // ExpressionUrlAuthorizationConfigurer没有提供FilterSecurityInterceptor的set方法
                 // 当然也不能直接在过滤器添加，若添加则会出现俩个FilterSecurityInterceptor，网上很多教程误人子弟
@@ -97,12 +101,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                         return fsi;
                     }
                 })
+                .accessDecisionManager(accessDecisionManager())
                 .anyRequest().authenticated() // 默认其他的认证
                 .and()
-                .sessionManagement().disable()  //禁用session
-                .formLogin().disable() //禁用form登录
-                .cors() // 支持跨域
-                .and() //添加跨域配置，在返回头上添加如下
                 .headers().addHeaderWriter(new StaticHeadersWriter(Arrays.asList(
                 new Header("Access-control-Allow-Origin", "*"),
                 new Header("Access-Control-Expose-Headers", "Authorization"))))
@@ -137,7 +138,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         filter.setAuthenticationManager(authenticationManagerBean());
         filter.setAuthenticationFailureHandler(new HttpStatusLoginFailureHandler());
         filter.setSessionAuthenticationStrategy(new NullAuthenticatedSessionStrategy());
-        filter.setAuthenticationSuccessHandler(new JsonLoginSuccessHandler());
+        filter.setAuthenticationSuccessHandler(new JsonLoginSuccessHandler(userService));
         getHttp().addFilterAfter(filter, LogoutFilter.class);
         registrationBean.setFilter(filter);
 //        registrationBean.addUrlPatterns("*.json");//配置过滤规则
@@ -148,6 +149,24 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         return registrationBean;
     }
 
+    @Bean
+    public FilterRegistrationBean jwtAuthenticationFilter() throws Exception {
+        FilterRegistrationBean registrationBean = new FilterRegistrationBean();
+        JwtAuthenticationFilter filter = new JwtAuthenticationFilter();
+        // 使用自带的manager
+        filter.setAuthenticationManager(authenticationManagerBean());
+        filter.setAuthenticationSuccessHandler(jwtRefreshSuccessHandler());
+        filter.setAuthenticationFailureHandler(new HttpStatusLoginFailureHandler());
+        filter.setPermissiveUrl(securityUrlPermit);
+        getHttp().addFilterBefore(filter, LogoutFilter.class);
+        registrationBean.setFilter(filter);
+//        registrationBean.addUrlPatterns("*.json");//配置过滤规则
+//        registrationBean.setUrlPatterns();
+
+        registrationBean.setName("securityFilter2");//设置过滤器名称
+//        registrationBean.setOrder(0);//执行次序
+        return registrationBean;
+    }
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
@@ -168,7 +187,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Bean("daoAuthenticationProvider")
     protected AuthenticationProvider daoAuthenticationProvider() throws Exception {
         //这里会默认使用BCryptPasswordEncoder比对加密后的密码，注意要跟createUser时保持一致
+        //
         DaoAuthenticationProvider daoProvider = new DaoAuthenticationProvider();
+        daoProvider.setPasswordEncoder(bCryptPasswordEncoder());
         daoProvider.setUserDetailsService(userService);
         return daoProvider;
     }
@@ -176,7 +197,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Bean
     protected JsonLoginSuccessHandler jsonLoginSuccessHandler() {
-        return new JsonLoginSuccessHandler();
+        return new JsonLoginSuccessHandler(userService);
     }
 
     @Bean
@@ -211,7 +232,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
      */
     @Bean
     public FilterInvocationSecurityMetadataSource mySecurityMetadataSource(FilterInvocationSecurityMetadataSource filterInvocationSecurityMetadataSource) {
-        return new MyInvocationSecurityMetadataSourceService(filterInvocationSecurityMetadataSource);
+        MyInvocationSecurityMetadataSourceService metadataSourceService = new MyInvocationSecurityMetadataSourceService(filterInvocationSecurityMetadataSource);
+        return metadataSourceService;
     }
 
 
@@ -220,9 +242,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         List<AccessDecisionVoter<? extends Object>> decisionVoters
                 = Arrays.asList(
                 new WebExpressionVoter(),
-                // new RoleVoter(),
-                new RoleBasedVoter(),
-                new AuthenticatedVoter());
+                new AuthenticatedVoter(),
+                new RoleBasedVoter()
+        );
         return new UnanimousBased(decisionVoters);
     }
 }

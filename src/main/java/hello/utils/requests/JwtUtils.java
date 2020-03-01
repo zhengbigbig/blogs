@@ -105,6 +105,7 @@ public class JwtUtils {
          * 签名信息校验，防篡改
          * 载体payload 公有声明字段校验
          */
+        // 该方法也会验证有效性
         return verifier.verify(token);
     }
 

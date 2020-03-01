@@ -41,6 +41,7 @@ public class RoleBasedVoter implements AccessDecisionVoter<Object> {
         Collection<? extends GrantedAuthority> authorities = extractAuthorities(authentication);
 
         for (ConfigAttribute attribute : configAttributes) {
+            // 当前用户请求url不需要实际权限，弃权
             if(attribute.getAttribute()==null){
                 continue;
             }

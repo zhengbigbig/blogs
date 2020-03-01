@@ -76,5 +76,30 @@ AccessDecisionManager中return是不会被放行的
 2. 引入```mybatis convert to mybatis-plus```，并集成AutoGenerator自动生成代码，减少重复劳动
 并自定义mybatis-plus handler
 3. 集成```p6spy```，可在控制台查看mybatis日志，可通过日志进行优化分析
-
-
+4. 使用```DaoAuthenticationProvider```替换之前自己写的provider，并增加token的provider
+5. 注意mybatis-plus非静态，需要注意bean依赖关系
+6. 对登录成功的用户，将token保存在redis中，现在策略是只保存一个，若需要其他，只需要重写逻辑，譬如不同设备允许登录一个
+7. 登录之后访问带权限的接口时，进行token的校验，若校验通过，看是否token快过期，若快过期则刷新token有效时间，优化用户体验
+8. 官方```AccessDecisionManager```规则有三：
+- ```AffirmativeBased``` 一票通过 （默认）
+- ```UnanimousBased``` 一票否决
+- ```ConsensusBased``` 少数服从多数
+这里定义bean
+```java
+    @Bean
+    public AccessDecisionManager accessDecisionManager() {
+        List<AccessDecisionVoter<? extends Object>> decisionVoters
+                = Arrays.asList(
+                new WebExpressionVoter(),
+                new AuthenticatedVoter(),
+                new RoleBasedVoter()
+        );
+        return new AffirmativeBased(decisionVoters);
+    }
+```
+例如访问/auth接口，设置了permitAll，投票会如下
+```WebExpressionVoter```投票的是ExpressionUrlAuthorizationConfigurer中定义的权限，会通过
+```AuthenticatedVoter``` 权限有三：```IS_AUTHENTICATED_FULLY IS_AUTHENTICATED_REMEMBERED IS_AUTHENTICATED_ANONYMOUSLY```，有一则进行深度校验，具体可看源码
+这里未设置，则会弃权 
+自定义中```RoleBasedVoter```，因为访问的```/auth```是permitAll，没有定义权限，则会直接弃权，当然，可以自定义
+这里我们使用 ```UnanimousBased```，也就是一票否决，俩个弃权，一个通过，结果为通过

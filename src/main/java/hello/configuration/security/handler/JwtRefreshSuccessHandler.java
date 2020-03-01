@@ -19,6 +19,7 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 
 
 import static hello.utils.requests.JwtUtils.TOKEN_PARAMETER.EXPIRATION;
+import static hello.utils.requests.JwtUtils.TOKEN_PREFIX;
 
 public class JwtRefreshSuccessHandler implements AuthenticationSuccessHandler {
 
@@ -33,10 +34,14 @@ public class JwtRefreshSuccessHandler implements AuthenticationSuccessHandler {
                                         Authentication authentication) throws IOException, ServletException {
         String jwt = ((JwtAuthenticationToken) authentication).getToken();
         Date o = (Date) JwtUtils.decodeToken(jwt, EXPIRATION);
+        UserDetails principal = (UserDetails) authentication.getPrincipal();
         boolean shouldRefresh = shouldTokenRefresh(o);
+        // 是否需要刷新token，若需要则刷新，实际上，redis会将过期的token清理，因为前面设置了过期时间
         if (shouldRefresh) {
-            String newToken = userService.saveUserLoginToRedis((UserDetails) authentication.getPrincipal());
-            response.setHeader("Authorization", newToken);
+            // 删除redis中的，再重新创建，若是多端，则逻辑重写
+            userService.deleteUserLoginInfoToRedis(principal.getUsername());
+            String newToken = userService.saveUserLoginToRedis(principal);
+            response.setHeader("Authorization",TOKEN_PREFIX + newToken);
         }
     }
 

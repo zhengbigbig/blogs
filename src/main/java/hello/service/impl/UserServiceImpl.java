@@ -14,7 +14,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -26,12 +25,13 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService, UserDetailsService {
-    @Autowired
+    @Inject
     private UserMapper userMapper;
-    @Autowired
+    @Inject
     private BCryptPasswordEncoder bCryptPasswordEncoder;
-    @Autowired
+    @Inject
     private PermissionMapper permissionMapper;
+    @Inject
     private StringRedisTemplate stringRedisTemplate;
 
 
@@ -46,7 +46,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     public String saveUserLoginToRedis(UserDetails user) {
         // 正式开发时可以调用该方法实时生成加密的salt
-        BCrypt.gensalt();
         /**
          * @todo 将salt保存到数据库或者缓存中
          * redisTemplate.opsForValue().set("token:"+username, salt, 3600, TimeUnit.SECONDS);

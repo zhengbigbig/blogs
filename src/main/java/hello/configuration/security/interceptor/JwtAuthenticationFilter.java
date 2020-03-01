@@ -23,6 +23,7 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -39,12 +40,17 @@ import java.util.stream.Collectors;
  */
 @Log
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-    private RequestMatcher requiresAuthenticationRequestMatcher;
     private List<RequestMatcher> permissiveRequestMatchers;
     private AuthenticationManager authenticationManager;
 
     private AuthenticationSuccessHandler successHandler = new SavedRequestAwareAuthenticationSuccessHandler();
     private AuthenticationFailureHandler failureHandler = new SimpleUrlAuthenticationFailureHandler();
+
+//    @Override
+//    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+//        return super.shouldNotFilter(request);
+////        return true;
+//    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException {
@@ -78,6 +84,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
         if(authResult != null) {
             successfulAuthentication(request, response, filterChain, authResult);
+            // 如果验证未通过，譬如无效的token，但有些接口无需权限的，可以直接判断后转给下一个过滤器
+            // 这里仅做思路，因为我们有了WebExpressionVoter可以投票出HttpSecurity中ExpressionUrlAuthorizationConfigurer
+            // 下面判断可省略，后续，若想对过滤器进行制定验证，通过getter和setter将参数传入了做校验
         } else if(!permissiveRequest(request)){
             unsuccessfulAuthentication(request, response, failed);
             return;
