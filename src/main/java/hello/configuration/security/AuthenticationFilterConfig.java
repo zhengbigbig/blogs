@@ -5,11 +5,14 @@ import hello.configuration.security.filter.JwtLoginFilter;
 import hello.configuration.security.handler.CustomLoginFailureHandler;
 import hello.configuration.security.handler.CustomLoginSuccessHandler;
 import hello.configuration.security.handler.JwtAuthenticationSuccessHandler;
+import hello.configuration.security.provider.JwtAuthenticationProvider;
 import hello.service.impl.UserServiceImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.SecurityConfigurerAdapter;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.DefaultSecurityFilterChain;
 import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.security.web.authentication.session.NullAuthenticatedSessionStrategy;
@@ -22,7 +25,7 @@ import javax.inject.Inject;
  */
 
 @Configuration
-public class FilterConfig extends SecurityConfigurerAdapter<DefaultSecurityFilterChain, HttpSecurity> {
+public class AuthenticationFilterConfig extends SecurityConfigurerAdapter<DefaultSecurityFilterChain, HttpSecurity> {
 
     @Inject
     private UserServiceImpl userService;
@@ -64,4 +67,27 @@ public class FilterConfig extends SecurityConfigurerAdapter<DefaultSecurityFilte
     protected JwtAuthenticationSuccessHandler jwtRefreshSuccessHandler() {
         return new JwtAuthenticationSuccessHandler();
     }
+
+    @Bean
+    protected JwtAuthenticationProvider jwtAuthenticationProvider() {
+        return new JwtAuthenticationProvider();
+    }
+
+    @Bean
+    protected DaoAuthenticationProvider daoAuthenticationProvider() throws Exception {
+        //这里会默认使用BCryptPasswordEncoder比对加密后的密码，注意要跟createUser时保持一致
+        //
+        DaoAuthenticationProvider daoProvider = new DaoAuthenticationProvider();
+        daoProvider.setPasswordEncoder(bCryptPasswordEncoder());
+        daoProvider.setUserDetailsService(userService);
+        return daoProvider;
+    }
+
+    // 对存储到数据库的密码进行加密
+    @Bean
+    public BCryptPasswordEncoder bCryptPasswordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+
 }

@@ -1,5 +1,6 @@
 package hello.utils;
 
+import lombok.Setter;
 import lombok.extern.java.Log;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,6 +24,7 @@ import javax.inject.Inject;
  */
 //@ComponentScan("hello")
 //@ConfigurationProperties(prefix = "web-env")
+@Setter
 @PropertySource(name = "systemEnv", value = "classpath:system.properties")
 public class SystemPropertiesEnv {
 
@@ -33,6 +35,8 @@ public class SystemPropertiesEnv {
     private String webIgnore;
     @Value("${web-env.securityPermit}")
     private String securityPermit;
+    @Value("${web-env.cors}")
+    private Boolean cors;
 
     @Bean
     public static PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer() {
@@ -47,10 +51,6 @@ public class SystemPropertiesEnv {
         }
     }
 
-    public void setWebIgnore(String webIgnore) {
-        this.webIgnore = webIgnore;
-    }
-
     public String[] getSecurityPermit() {
         log.info(securityPermit);
         log.info(env.getProperty("web-env.webIgnore"));
@@ -61,7 +61,7 @@ public class SystemPropertiesEnv {
         }
     }
 
-    public void setSecurityPermit(String securityPermit) {
-        this.securityPermit = securityPermit;
+    public Boolean getCors() {
+        return cors;
     }
 }

@@ -12,13 +12,11 @@ import org.springframework.security.authentication.InternalAuthenticationService
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import javax.inject.Inject;
+
 @Log
 public class JwtAuthenticationProvider implements AuthenticationProvider {
     private UserServiceImpl userService;
-
-    public JwtAuthenticationProvider(UserServiceImpl userService) {
-        this.userService = userService;
-    }
 
     @Override
     public Authentication authenticate(Authentication authentication) {
@@ -51,4 +49,8 @@ public class JwtAuthenticationProvider implements AuthenticationProvider {
         return authentication.isAssignableFrom(JwtAuthenticationToken.class);
     }
 
+    @Inject
+    public void setUserService(UserServiceImpl userService) {
+        this.userService = userService;
+    }
 }
