@@ -1,23 +1,23 @@
 package hello.configuration;
 
-import hello.configuration.security.FilterConfig;
+import hello.configuration.security.AuthenticationFilterConfig;
+import hello.configuration.security.cors.CorsConfiguration;
 import hello.configuration.security.exceptionhander.SimpleAccessDeniedHandler;
 import hello.configuration.security.exceptionhander.SimpleAuthenticationEntryPoint;
 import hello.configuration.security.handler.CustomLogoutHandler;
 import hello.configuration.security.interceptor.MyInvocationSecurityMetadataSourceService;
 import hello.configuration.security.interceptor.RoleBasedVoter;
 import hello.configuration.security.provider.JwtAuthenticationProvider;
-import hello.service.impl.UserServiceImpl;
 import hello.utils.SystemPropertiesEnv;
 import lombok.extern.java.Log;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.access.AccessDecisionManager;
 import org.springframework.security.access.AccessDecisionVoter;
 import org.springframework.security.access.vote.AuthenticatedVoter;
 import org.springframework.security.access.vote.UnanimousBased;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -25,15 +25,11 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.access.expression.WebExpressionVoter;
 import org.springframework.security.web.access.intercept.FilterInvocationSecurityMetadataSource;
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
 import org.springframework.security.web.header.Header;
 import org.springframework.security.web.header.writers.StaticHeadersWriter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import javax.inject.Inject;
 import java.util.Arrays;
@@ -60,10 +56,13 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Inject
     private SystemPropertiesEnv systemPropertiesEnv;
     @Inject
-    private UserServiceImpl userService;
-
+    private CorsConfiguration corsConfiguration;
     @Inject
-    private FilterConfig filterConfig;
+    private AuthenticationFilterConfig authenticationFilterConfig;
+    @Inject
+    private JwtAuthenticationProvider jwtAuthenticationProvider;
+    @Inject
+    private DaoAuthenticationProvider daoAuthenticationProvider;
 
     // 避免自定义过滤器交给spring，否则失效
     @Override
@@ -73,9 +72,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http
-                .apply(filterConfig);
-//                .setRequestMatchers(securityUrlPermit);
+
         // csrf默认是开启的，会导致访问403，需要先关闭，一种跨站请求伪造，对post有效
         http
                 .csrf().disable()
@@ -102,18 +99,23 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .accessDecisionManager(accessDecisionManager())
                 .anyRequest().authenticated() // 默认其他的认证
                 .and()
-                .cors() //添加跨域配置，在返回头上添加如下
-                .and()
-                .headers().addHeaderWriter(new StaticHeadersWriter(Arrays.asList(
-                new Header("Access-control-Allow-Origin", "*"),
-                new Header("Access-Control-Expose-Headers", "Authorization"))))
-                .and() //拦截OPTIONS请求，直接返回header
-//                .addFilterAfter(new OptionsRequestFilter(), CorsFilter.class)
                 //使用默认的logoutFilter
                 .logout()
                 .logoutUrl(ConstantConfig.WEB_URL.LOGOUT.getUrl())
-                .addLogoutHandler(new CustomLogoutHandler());
+                .addLogoutHandler(new CustomLogoutHandler())
+                .and()
+                .apply(authenticationFilterConfig);
+        if (systemPropertiesEnv.getCors()) {
+            http.cors() //添加跨域配置，在返回头上添加如下
+                    .and()
+                    .headers().addHeaderWriter(new StaticHeadersWriter(Arrays.asList(
+                    new Header("Access-control-Allow-Origin", "*"),
+                    new Header("Access-Control-Expose-Headers", "Authorization"))))
+                    .and()
+                    //拦截OPTIONS请求，直接返回header
+                    .apply(corsConfiguration);
 
+        }
     }
 
     /**
@@ -128,47 +130,16 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     @Override
+    @Lazy
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.authenticationProvider(daoAuthenticationProvider())
-                .authenticationProvider(jwtAuthenticationProvider());
+        auth.authenticationProvider(jwtAuthenticationProvider)
+                .authenticationProvider(daoAuthenticationProvider);
     }
 
-    @Bean("jwtAuthenticationProvider")
-    protected AuthenticationProvider jwtAuthenticationProvider() {
-        return new JwtAuthenticationProvider(userService);
-    }
-
-    @Bean("daoAuthenticationProvider")
-    protected AuthenticationProvider daoAuthenticationProvider() throws Exception {
-        //这里会默认使用BCryptPasswordEncoder比对加密后的密码，注意要跟createUser时保持一致
-        //
-        DaoAuthenticationProvider daoProvider = new DaoAuthenticationProvider();
-        daoProvider.setPasswordEncoder(bCryptPasswordEncoder());
-        daoProvider.setUserDetailsService(userService);
-        return daoProvider;
-    }
-
-    // 对存储到数据库的密码进行加密
-    @Bean
-    public BCryptPasswordEncoder bCryptPasswordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
-    // http.cors() 开启后进行跨域设置
-    @Bean
-    protected CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("*"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "HEAD", "OPTION"));
-        configuration.setAllowedHeaders(Arrays.asList("*"));
-        configuration.addExposedHeader("Authorization");
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
 
     /**
      * 资源管理,决策放行
+     *
      * @param filterInvocationSecurityMetadataSource 参入放行参数
      * @return FilterInvocationSecurityMetadataSource
      */
