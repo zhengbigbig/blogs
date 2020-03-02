@@ -18,7 +18,6 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -28,7 +27,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.List;
 
 /**
  * Created by zhengzhiheng on 2020/2/28 1:38 下午
@@ -68,9 +66,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         } catch (InternalAuthenticationServiceException e) {
             log.info("An internal error occurred while trying to authenticate the user. :" + e.getMessage());
             failed = e;
-        } catch (AuthenticationException e) {
+        } catch (Exception e) {
             // Authentication failed
-            failed = e;
+            failed = new InsufficientAuthenticationException("JWT format error", e);
         }
         if (authResult != null) {
             successfulAuthentication(request, response, filterChain, authResult);

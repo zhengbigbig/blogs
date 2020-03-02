@@ -10,7 +10,6 @@ import org.springframework.security.web.access.intercept.FilterInvocationSecurit
 import org.springframework.util.AntPathMatcher;
 
 import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 
 // 用来储存请求与权限的对应关系

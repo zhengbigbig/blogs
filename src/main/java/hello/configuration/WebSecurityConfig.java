@@ -1,22 +1,17 @@
 package hello.configuration;
 
-import cn.hutool.core.util.ArrayUtil;
-import hello.configuration.security.interceptor.MyInvocationSecurityMetadataSourceService;
-import hello.configuration.security.interceptor.RoleBasedVoter;
 import hello.configuration.security.FilterConfig;
-import hello.configuration.security.handler.CustomLogoutHandler;
 import hello.configuration.security.exceptionhander.SimpleAccessDeniedHandler;
 import hello.configuration.security.exceptionhander.SimpleAuthenticationEntryPoint;
+import hello.configuration.security.handler.CustomLogoutHandler;
+import hello.configuration.security.interceptor.MyInvocationSecurityMetadataSourceService;
+import hello.configuration.security.interceptor.RoleBasedVoter;
 import hello.configuration.security.provider.JwtAuthenticationProvider;
 import hello.service.impl.UserServiceImpl;
 import hello.utils.SystemPropertiesEnv;
-import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.java.Log;
-import org.springframework.boot.web.servlet.ServletComponentScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.security.access.AccessDecisionManager;
 import org.springframework.security.access.AccessDecisionVoter;
 import org.springframework.security.access.vote.AuthenticatedVoter;
@@ -36,7 +31,6 @@ import org.springframework.security.web.access.intercept.FilterInvocationSecurit
 import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
 import org.springframework.security.web.header.Header;
 import org.springframework.security.web.header.writers.StaticHeadersWriter;
-import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -61,17 +55,10 @@ import java.util.List;
 @Log
 @Configuration
 @EnableWebSecurity
-@ServletComponentScan
 //@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
-    private String[] ignoredWebURI = {
-            "/", "/index.html", "/error/**", "/static/**", // 静态资源
-            "/js/**", "/css/**", "/fonts/**"
-    };
-
-    private String[] securityUrlPermit = {
-            "/auth/**", "/favicon.ico", "/user/**"
-    };
+    @Inject
+    private SystemPropertiesEnv systemPropertiesEnv;
     @Inject
     private UserServiceImpl userService;
 
@@ -81,7 +68,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     // 避免自定义过滤器交给spring，否则失效
     @Override
     public void configure(WebSecurity web) throws Exception {
-        web.ignoring().antMatchers(ignoredWebURI);
+        web.ignoring().antMatchers(systemPropertiesEnv.getWebIgnore());
     }
 
     @Override
@@ -102,7 +89,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 // ExpressionUrlAuthorizationConfigurer没有提供FilterSecurityInterceptor的set方法
                 // 当然也不能直接在过滤器添加，若添加则会出现俩个FilterSecurityInterceptor，网上很多教程误人子弟
                 // 无需访问权限的放行
-                .antMatchers(securityUrlPermit).permitAll()
+                .antMatchers(systemPropertiesEnv.getSecurityPermit()).permitAll()
                 // 自定义FilterInvocationSecurityMetadataSource
                 .withObjectPostProcessor(new ObjectPostProcessor<FilterSecurityInterceptor>() {
                     @Override
@@ -122,18 +109,12 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 new Header("Access-Control-Expose-Headers", "Authorization"))))
                 .and() //拦截OPTIONS请求，直接返回header
 //                .addFilterAfter(new OptionsRequestFilter(), CorsFilter.class)
-
                 //使用默认的logoutFilter
                 .logout()
                 .logoutUrl(ConstantConfig.WEB_URL.LOGOUT.getUrl())
                 .addLogoutHandler(new CustomLogoutHandler());
 
     }
-
-//    @Bean
-//    public SystemPropertiesEnv systemPropertiesEnv(){
-//        return new SystemPropertiesEnv();
-//    }
 
     /**
      * 鉴权
@@ -188,7 +169,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
     /**
      * 资源管理,决策放行
-     *
+     * @param filterInvocationSecurityMetadataSource 参入放行参数
      * @return FilterInvocationSecurityMetadataSource
      */
     @Bean

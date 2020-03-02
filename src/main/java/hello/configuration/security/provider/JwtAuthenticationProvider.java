@@ -11,9 +11,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.web.authentication.www.NonceExpiredException;
 
-import java.util.Date;
 @Log
 public class JwtAuthenticationProvider implements AuthenticationProvider {
     private UserServiceImpl userService;
@@ -30,7 +28,7 @@ public class JwtAuthenticationProvider implements AuthenticationProvider {
         // 校验并返回解析结果 验证时效
         try {
             jwt = JwtUtils.verifyToken(token);
-        } catch (JWTVerificationException e) {
+        } catch (JWTVerificationException | IllegalArgumentException e) {
             log.info(e.getMessage());
             throw new BadCredentialsException("JWT token verify result: invalid", e);
         }

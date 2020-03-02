@@ -126,7 +126,7 @@ public class AuthController {
     @ResponseBody
     public void test() {
         ValueOperations ops = redisTemplate.opsForValue();
-        ops.set("k2","v1");
+        ops.set("k2", "v1");
         Object k1 = ops.get("k2");
         System.out.println(k1);
     }

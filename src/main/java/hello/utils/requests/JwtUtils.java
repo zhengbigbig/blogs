@@ -54,8 +54,11 @@ public class JwtUtils {
      */
 
     /**
+     *
      * @param userDetails 存放username和权限信息，不存隐私
-     * @return token
+     * @param isRememberMe 是否开启记住 延时token
+     * @param second 秒
+     * @return 返回token
      */
     public static String createToken(UserDetails userDetails, boolean isRememberMe, int second) {
         try {
@@ -87,10 +90,10 @@ public class JwtUtils {
     }
 
     /**
-     * 验证token 有效性
      *
-     * @param token token
-     * @return boolean
+     * @param token 验证token 有效性
+     * @return DecodedJWT
+     * @throws JWTVerificationException 验证异常可能会包括传参
      */
     public static DecodedJWT verifyToken(String token) throws JWTVerificationException {
         Algorithm algorithm = Algorithm.HMAC256(SECRET);
@@ -110,7 +113,7 @@ public class JwtUtils {
     }
 
     /**
-     * 解码
+     * 解码参数
      */
     public enum TOKEN_PARAMETER {
         ISSUER, SUBJECT, EXPIRATION, CUSTOM

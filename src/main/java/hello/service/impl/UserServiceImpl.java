@@ -8,7 +8,6 @@ import hello.mapper.PermissionMapper;
 import hello.mapper.UserMapper;
 import hello.service.UserService;
 import hello.utils.requests.JwtUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -61,8 +60,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     public boolean deleteUserLoginInfoToRedis(String username) {
-        Boolean delete = stringRedisTemplate.delete("token:" + username);
-        return delete;
+        try {
+            Boolean delete = stringRedisTemplate.delete("token:" + username);
+            return delete;
+        } catch (NullPointerException e) {
+            return true;
+        }
     }
 
 
@@ -80,7 +83,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                         i -> i.eq("username", username)
                                 .or().eq("email", username)
                 );
-        User user = getOne(query,false);
+        User user = getOne(query, false);
         return user;
     }
 
